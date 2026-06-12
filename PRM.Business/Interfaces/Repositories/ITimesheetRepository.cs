@@ -23,4 +23,7 @@ public interface ITimesheetRepository : IRepository<Timesheet>
         int timesheetId,
         int userId,
         CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Timesheet>> GetFrozenTimesheetsForManagerAsync(
+        int managerUserId,
+        CancellationToken cancellationToken = default);
 }

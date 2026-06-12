@@ -60,7 +60,8 @@ public class EmployeePortalService : IEmployeePortalService
     {
         var resource = await GetActiveResourceOrThrowAsync(userId, cancellationToken);
         var weekStart = WeekHelper.GetWeekStartDate(weekStartDate ?? DateTime.UtcNow.Date);
-        var weekEnd = WeekHelper.GetWeekEndDate(weekStart);
+        var weekEnd = WeekHelper.GetWeekWorkingEndDate(weekStart);
+        var today = DateTime.UtcNow.Date;
         var config = await _systemConfigRepository.GetSingletonAsync(cancellationToken)
             ?? throw new BusinessValidationException("System configuration not found.");
         var allocations = await _allocationRepository.GetByUserIdForPeriodAsync(
@@ -78,6 +79,7 @@ public class EmployeePortalService : IEmployeePortalService
             WeekStartDate = weekStart.ToString("dd-MM-yyyy"),
             MaxWeeklyHours = config.MaxWeeklyHours,
             AlreadySubmitted = existingTimesheet?.Status == TimesheetStatus.Submitted,
+            CanSubmit = TimesheetWorkflowHelper.CanEmployeeSubmit(existingTimesheet, weekStart, today),
             Projects = allocations
                 .Select(allocation => new TimesheetSubmitProjectItemDto
                 {
@@ -97,7 +99,8 @@ public class EmployeePortalService : IEmployeePortalService
     {
         var resource = await GetActiveResourceOrThrowAsync(userId, cancellationToken);
         var weekStart = ResolveWeekStartDate(request.WeekStartDate);
-        var weekEnd = WeekHelper.GetWeekEndDate(weekStart);
+        var weekEnd = WeekHelper.GetWeekWorkingEndDate(weekStart);
+        var today = DateTime.UtcNow.Date;
         var config = await _systemConfigRepository.GetSingletonAsync(cancellationToken)
             ?? throw new BusinessValidationException("System configuration not found.");
         var existingTimesheet = await _timesheetRepository.GetByUserIdForWeekForUpdateAsync(
@@ -107,6 +110,20 @@ public class EmployeePortalService : IEmployeePortalService
         if (existingTimesheet?.Status == TimesheetStatus.Submitted)
         {
             throw new BusinessValidationException("Timesheet for this week has already been submitted.");
+        }
+        if (!TimesheetWorkflowHelper.CanEmployeeSubmit(existingTimesheet, weekStart, today))
+        {
+            if (TimesheetWorkflowHelper.IsFrozen(existingTimesheet))
+            {
+                throw new BusinessValidationException(
+                    "Timesheet for this week is frozen. Contact your manager to restore access.");
+            }
+            if (existingTimesheet is not { IsUnlockedByManager: true })
+            {
+                throw new BusinessValidationException(
+                    "Timesheet submission is not allowed for this week. Enter the correct week start date (Monday) for the restored timesheet.");
+            }
+            throw new BusinessValidationException("Timesheet submission is not allowed for this week.");
         }
         var allocations = await _allocationRepository.GetByUserIdForPeriodAsync(
             resource.UserId,
@@ -149,6 +166,8 @@ public class EmployeePortalService : IEmployeePortalService
         {
             existingTimesheet.Status = TimesheetStatus.Submitted;
             existingTimesheet.TotalHours = (int)totalHours;
+            existingTimesheet.IsFrozen = false;
+            existingTimesheet.IsUnlockedByManager = false;
             existingTimesheet.Entries.Clear();
             foreach (var entry in entries)
             {
@@ -188,13 +207,14 @@ public class EmployeePortalService : IEmployeePortalService
     {
         var resource = await GetActiveResourceOrThrowAsync(userId, cancellationToken);
         var timesheets = await _timesheetRepository.GetHistoryByUserIdAsync(resource.UserId, cancellationToken);
+        var today = DateTime.UtcNow.Date;
         return timesheets
             .Select(timesheet => new EmployeeTimesheetHistoryItemDto
             {
                 TimesheetId = timesheet.Id,
                 WeekStartDate = timesheet.WeekStartDate.ToString("dd-MM-yyyy"),
                 TotalHours = timesheet.TotalHours,
-                Status = FormatTimesheetStatus(timesheet.Status)
+                Status = FormatTimesheetStatus(timesheet, today)
             })
             .ToList();
     }
@@ -217,7 +237,7 @@ public class EmployeePortalService : IEmployeePortalService
         {
             WeekStartDate = timesheet.WeekStartDate.ToString("dd-MM-yyyy"),
             TotalHours = timesheet.TotalHours,
-            Status = FormatTimesheetStatus(timesheet.Status),
+            Status = FormatTimesheetStatus(timesheet, DateTime.UtcNow.Date),
             Entries = timesheet.Entries
                 .OrderBy(entry => entry.Project.Name)
                 .Select(entry => new EmployeeTimesheetEntryDetailDto
@@ -260,8 +280,8 @@ public class EmployeePortalService : IEmployeePortalService
         return WeekHelper.GetWeekStartDate(DateValidator.ParseRequired(weekStartDate, "Week start date"));
     }
 
-    private static string FormatTimesheetStatus(TimesheetStatus status)
+    private static string FormatTimesheetStatus(Timesheet timesheet, DateTime today)
     {
-        return status == TimesheetStatus.Missed ? "MISSED" : "SUBMITTED";
+        return TimesheetWorkflowHelper.GetDisplayStatus(timesheet, timesheet.WeekStartDate, today);
     }
 }

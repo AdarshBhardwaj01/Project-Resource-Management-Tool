@@ -365,7 +365,8 @@ public class ManagerService : IManagerService
     {
         await ValidateManagerUserAsync(managerUserId, cancellationToken);
         var weekStart = WeekHelper.GetWeekStartDate(weekStartDate ?? DateTime.UtcNow.Date);
-        var weekEnd = WeekHelper.GetWeekEndDate(weekStart);
+        var weekEnd = WeekHelper.GetWeekWorkingEndDate(weekStart);
+        var today = DateTime.UtcNow.Date;
         var teamResources = await _resourceRepository.GetTeamResourcesWithAllocationsAsync(
             managerUserId,
             weekStart,
@@ -396,7 +397,7 @@ public class ManagerService : IManagerService
                     ProjectId = 0,
                     ProjectName = "(no active allocation)",
                     Hours = 0,
-                    Status = FormatTimesheetStatus(timesheet)
+                    Status = FormatTimesheetStatus(timesheet, weekStart, today)
                 });
                 continue;
             }
@@ -410,7 +411,7 @@ public class ManagerService : IManagerService
                     ProjectId = allocation.ProjectId,
                     ProjectName = allocation.Project.Name,
                     Hours = entry is null ? 0 : (int)entry.Hours,
-                    Status = FormatTimesheetStatus(timesheet)
+                    Status = FormatTimesheetStatus(timesheet, weekStart, today)
                 });
             }
         }
@@ -429,7 +430,8 @@ public class ManagerService : IManagerService
     {
         await ValidateManagerUserAsync(managerUserId, cancellationToken);
         var weekStart = WeekHelper.GetWeekStartDate(weekStartDate ?? DateTime.UtcNow.Date);
-        var weekEnd = WeekHelper.GetWeekEndDate(weekStart);
+        var weekEnd = WeekHelper.GetWeekWorkingEndDate(weekStart);
+        var today = DateTime.UtcNow.Date;
         if (!await _resourceRepository.IsAssignedToManagerAsync(employeeId, managerUserId, cancellationToken))
         {
             throw new BusinessValidationException("Employee not found on your team.");
@@ -474,7 +476,7 @@ public class ManagerService : IManagerService
             EmployeeName = employeeName,
             WeekStartDate = weekStart.ToString("dd-MMM-yyyy"),
             TotalHours = entries.Sum(entry => entry.Hours),
-            Status = FormatTimesheetStatus(timesheet),
+            Status = FormatTimesheetStatus(timesheet, weekStart, today),
             Entries = entries
         };
     }
@@ -844,7 +846,7 @@ public class ManagerService : IManagerService
     private static string FormatAvailability(int usedPercent, int availablePercent)
     {
         return usedPercent >= 100
-            ? "FULL"
+            ? "0% free"
             : $"{availablePercent}% free";
     }
 
@@ -974,12 +976,68 @@ public class ManagerService : IManagerService
         return flags;
     }
 
-    private static string FormatTimesheetStatus(Timesheet? timesheet)
+    private static string FormatTimesheetStatus(
+        Timesheet? timesheet,
+        DateTime weekStartDate,
+        DateTime today)
     {
-        if (timesheet is null || timesheet.Status == TimesheetStatus.Missed)
+        return TimesheetWorkflowHelper.GetDisplayStatus(timesheet, weekStartDate, today);
+    }
+
+    public async Task<IReadOnlyList<FrozenTimesheetItemDto>> GetFrozenTimesheetsAsync(
+        int managerUserId,
+        CancellationToken cancellationToken = default)
+    {
+        await ValidateManagerUserAsync(managerUserId, cancellationToken);
+        var frozenTimesheets = await _timesheetRepository.GetFrozenTimesheetsForManagerAsync(
+            managerUserId,
+            cancellationToken);
+        return frozenTimesheets
+            .Select((timesheet, index) => new FrozenTimesheetItemDto
+            {
+                RowNumber = index + 1,
+                EmployeeId = timesheet.UserId,
+                EmployeeName = timesheet.Resource.User.FullName,
+                WeekStartDate = timesheet.WeekStartDate.ToString("dd-MMM-yyyy"),
+                Status = "FROZEN",
+                ReminderCount = timesheet.ReminderCount
+            })
+            .ToList();
+    }
+
+    public async Task<string> RestoreFrozenTimesheetAsync(
+        int managerUserId,
+        RestoreFrozenTimesheetRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        await ValidateManagerUserAsync(managerUserId, cancellationToken);
+        if (request.EmployeeId <= 0 || string.IsNullOrWhiteSpace(request.WeekStartDate))
         {
-            return "MISSED";
+            throw new BusinessValidationException("Employee ID and week start date are required.");
         }
-        return "SUBMITTED";
+        if (!await _resourceRepository.IsAssignedToManagerAsync(
+                request.EmployeeId,
+                managerUserId,
+                cancellationToken))
+        {
+            throw new BusinessValidationException("Employee not found on your team.");
+        }
+        var weekStart = WeekHelper.GetWeekStartDate(
+            DateValidator.ParseRequired(request.WeekStartDate, "Week start date"));
+        var timesheet = await _timesheetRepository.GetByUserIdForWeekForUpdateAsync(
+            request.EmployeeId,
+            weekStart,
+            cancellationToken);
+        if (timesheet is null || !TimesheetWorkflowHelper.IsFrozen(timesheet))
+        {
+            throw new BusinessValidationException("No frozen timesheet was found for the selected employee and week.");
+        }
+        timesheet.IsUnlockedByManager = true;
+        timesheet.IsFrozen = false;
+        timesheet.Status = TimesheetStatus.Pending;
+        await _timesheetRepository.SaveChangesAsync(cancellationToken);
+        return
+            $"Timesheet access restored for {timesheet.Resource?.User?.FullName ?? "employee"} " +
+            $"for week starting {weekStart:dd-MMM-yyyy}.";
     }
 }

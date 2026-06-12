@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using PRM.Business.Helpers;
 using PRM.Business.Interfaces.Repositories;
 using PRM.Business.Interfaces.Services;
@@ -12,21 +13,31 @@ public class PrmSchedulerService : IPrmSchedulerService
     private readonly IResourceRepository _resourceRepository;
     private readonly IProjectRepository _projectRepository;
     private readonly ISystemConfigRepository _systemConfigRepository;
+    private readonly ITimesheetSchedulerService _timesheetSchedulerService;
+    private readonly IEmailNotificationService _emailNotificationService;
+    private readonly ILogger<PrmSchedulerService> _logger;
 
     public PrmSchedulerService(
         IResourceRepository resourceRepository,
         IProjectRepository projectRepository,
-        ISystemConfigRepository systemConfigRepository)
+        ISystemConfigRepository systemConfigRepository,
+        ITimesheetSchedulerService timesheetSchedulerService,
+        IEmailNotificationService emailNotificationService,
+        ILogger<PrmSchedulerService> logger)
     {
         _resourceRepository = resourceRepository;
         _projectRepository = projectRepository;
         _systemConfigRepository = systemConfigRepository;
+        _timesheetSchedulerService = timesheetSchedulerService;
+        _emailNotificationService = emailNotificationService;
+        _logger = logger;
     }
 
     public async Task RunScheduledTasksAsync(CancellationToken cancellationToken = default)
     {
         await RecomputeAllResourcesInternalAsync(cancellationToken);
         await RecomputeProjectHealthAsync(cancellationToken);
+        await _timesheetSchedulerService.ProcessTimesheetWorkflowAsync(cancellationToken);
     }
 
     public async Task RecomputeResourceAsync(
@@ -61,8 +72,25 @@ public class PrmSchedulerService : IPrmSchedulerService
         var hasChanges = false;
         foreach (var project in projects)
         {
+            var previousHealth = project.HealthStatus;
             if (ApplyProjectHealth(project, today, maxWeeklyHours))
             {
+                hasChanges = true;
+                if (project.HealthStatus == ProjectHealthStatus.AtRisk
+                    && project.AtRiskNotificationSentAt is null)
+                {
+                    await SendProjectAtRiskNotificationAsync(project, cancellationToken);
+                    project.AtRiskNotificationSentAt = DateTime.UtcNow;
+                }
+                else if (project.HealthStatus != ProjectHealthStatus.AtRisk)
+                {
+                    project.AtRiskNotificationSentAt = null;
+                }
+            }
+            else if (previousHealth == ProjectHealthStatus.AtRisk
+                && project.HealthStatus != ProjectHealthStatus.AtRisk)
+            {
+                project.AtRiskNotificationSentAt = null;
                 hasChanges = true;
             }
         }
@@ -84,8 +112,25 @@ public class PrmSchedulerService : IPrmSchedulerService
         {
             return;
         }
+        var previousHealth = project.HealthStatus;
         if (ApplyProjectHealth(project, today, maxWeeklyHours))
         {
+            if (project.HealthStatus == ProjectHealthStatus.AtRisk
+                && project.AtRiskNotificationSentAt is null)
+            {
+                await SendProjectAtRiskNotificationAsync(project, cancellationToken);
+                project.AtRiskNotificationSentAt = DateTime.UtcNow;
+            }
+            else if (project.HealthStatus != ProjectHealthStatus.AtRisk)
+            {
+                project.AtRiskNotificationSentAt = null;
+            }
+            await _projectRepository.SaveChangesAsync(cancellationToken);
+        }
+        else if (previousHealth == ProjectHealthStatus.AtRisk
+            && project.HealthStatus != ProjectHealthStatus.AtRisk)
+        {
+            project.AtRiskNotificationSentAt = null;
             await _projectRepository.SaveChangesAsync(cancellationToken);
         }
     }
@@ -120,22 +165,51 @@ public class PrmSchedulerService : IPrmSchedulerService
 
     private static bool ApplyProjectHealth(Project project, DateTime today, int maxWeeklyHours)
     {
-        var allocations = project.Allocations
-            .Where(allocation =>
-                allocation.ToDate.Date > today &&
-                allocation.Resource.User.IsActive &&
-                UserRoleHelper.HasRole(allocation.Resource.User, ApplicationRole.Employee))
-            .ToList();
-        var healthStatus = ProjectHealthCalculator.Compute(
-            project,
-            allocations,
-            today,
-            maxWeeklyHours);
+        var healthStatus = ProjectHealthCalculator.ComputeForProject(project, today, maxWeeklyHours);
         if (project.HealthStatus == healthStatus)
         {
             return false;
         }
         project.HealthStatus = healthStatus;
         return true;
+    }
+
+    private async Task SendProjectAtRiskNotificationAsync(
+        Project project,
+        CancellationToken cancellationToken)
+    {
+        if (project.Manager is null)
+        {
+            _logger.LogWarning(
+                "Project {ProjectId} is AT RISK but manager details are unavailable for email notification.",
+                project.Id);
+            return;
+        }
+        var summary = BuildAtRiskSummary(project);
+        await _emailNotificationService.SendProjectAtRiskAsync(
+            project.Manager.Email,
+            project.Manager.FullName,
+            project.Name,
+            "AT RISK",
+            summary,
+            cancellationToken);
+        _logger.LogInformation(
+            "Sent AT RISK notification for project {ProjectName} to manager {ManagerEmail}.",
+            project.Name,
+            project.Manager.Email);
+    }
+
+    private static string BuildAtRiskSummary(Project project)
+    {
+        var today = DateTime.UtcNow.Date;
+        var overdueMilestones = project.Milestones
+            .Where(milestone => milestone.DueDate.Date < today && milestone.Status != MilestoneStatus.Done)
+            .Select(milestone => milestone.Title)
+            .ToList();
+        if (overdueMilestones.Count > 0)
+        {
+            return $"Project health is AT RISK due to overdue milestone(s): {string.Join(", ", overdueMilestones)}.";
+        }
+        return "Project health is AT RISK. Review milestones, allocations, and recent timesheet submissions.";
     }
 }

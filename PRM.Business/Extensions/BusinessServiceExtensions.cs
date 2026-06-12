@@ -15,6 +15,7 @@ public static class BusinessServiceExtensions
         IConfiguration configuration)
     {
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+        services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
         services.AddAutoMapper(typeof(AuthMappingProfile).Assembly);
         services.AddHttpClient("GeminiLlm", client =>
         {
@@ -42,6 +43,8 @@ public static class BusinessServiceExtensions
         services.AddScoped<ISystemConfigService, SystemConfigService>();
         services.AddScoped<IEmployeeStatusSchedulerService, EmployeeStatusSchedulerService>();
         services.AddScoped<IPrmSchedulerService, PrmSchedulerService>();
+        services.AddScoped<ITimesheetSchedulerService, TimesheetSchedulerService>();
+        services.AddScoped<IEmailNotificationService, SmtpEmailNotificationService>();
         services.AddScoped<IManagerService, ManagerService>();
         services.AddScoped<IEmployeePortalService, EmployeePortalService>();
         return services;

@@ -82,6 +82,7 @@ services.AddScoped<ResourceDashboardScreen>();
 services.AddScoped<AllocateResourceScreen>();
 services.AddScoped<MyProjectsScreen>();
 services.AddScoped<TeamTimesheetsScreen>();
+services.AddScoped<RestoreFrozenTimesheetScreen>();
 services.AddScoped<TeamBuilderScreen>();
 services.AddScoped<AiAssistantScreen>();
 services.AddScoped<SubmitTimesheetScreen>();

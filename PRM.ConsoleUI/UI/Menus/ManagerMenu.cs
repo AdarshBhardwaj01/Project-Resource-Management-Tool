@@ -12,6 +12,7 @@ public class ManagerMenu
     private readonly AllocateResourceScreen _allocateResourceScreen;
     private readonly MyProjectsScreen _myProjectsScreen;
     private readonly TeamTimesheetsScreen _teamTimesheetsScreen;
+    private readonly RestoreFrozenTimesheetScreen _restoreFrozenTimesheetScreen;
     private readonly AiAssistantScreen _aiAssistantScreen;
 
     public ManagerMenu(
@@ -21,6 +22,7 @@ public class ManagerMenu
         AllocateResourceScreen allocateResourceScreen,
         MyProjectsScreen myProjectsScreen,
         TeamTimesheetsScreen teamTimesheetsScreen,
+        RestoreFrozenTimesheetScreen restoreFrozenTimesheetScreen,
         AiAssistantScreen aiAssistantScreen)
     {
         _session = session;
@@ -29,6 +31,7 @@ public class ManagerMenu
         _allocateResourceScreen = allocateResourceScreen;
         _myProjectsScreen = myProjectsScreen;
         _teamTimesheetsScreen = teamTimesheetsScreen;
+        _restoreFrozenTimesheetScreen = restoreFrozenTimesheetScreen;
         _aiAssistantScreen = aiAssistantScreen;
     }
 
@@ -42,8 +45,9 @@ public class ManagerMenu
             Console.WriteLine("2. Allocate Resource");
             Console.WriteLine("3. My Projects");
             Console.WriteLine("4. Timesheets");
-            Console.WriteLine("5. AI Assistant");
-            Console.WriteLine("6. Logout");
+            Console.WriteLine("5. Restore Frozen Timesheets");
+            Console.WriteLine("6. AI Assistant");
+            Console.WriteLine("7. Logout");
             Console.WriteLine();
             Console.Write("Enter option: ");
             var choice = Console.ReadLine()?.Trim();
@@ -62,9 +66,12 @@ public class ManagerMenu
                     await _teamTimesheetsScreen.ShowAsync();
                     break;
                 case "5":
-                    await _aiAssistantScreen.ShowAsync();
+                    await _restoreFrozenTimesheetScreen.ShowAsync();
                     break;
                 case "6":
+                    await _aiAssistantScreen.ShowAsync();
+                    break;
+                case "7":
                     _authApiClient.Logout();
                     return;
                 default:

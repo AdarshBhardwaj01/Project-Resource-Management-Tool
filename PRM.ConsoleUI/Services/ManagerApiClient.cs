@@ -143,4 +143,22 @@ public class ManagerApiClient : ApiClientBase
         await EnsureSuccessAsync(response, "Team build failed.");
         return await ReadJsonAsync<TeamBuildResponse>(response) ?? new TeamBuildResponse();
     }
+
+    public async Task<IReadOnlyList<FrozenTimesheetItemDto>> GetFrozenTimesheetsAsync()
+    {
+        ApplyAuthorizationHeader();
+        var response = await HttpClient.GetAsync("api/manager/timesheets/frozen");
+        await EnsureSuccessAsync(response, "Failed to load frozen timesheets.");
+        return await ReadJsonAsync<List<FrozenTimesheetItemDto>>(response)
+            ?? new List<FrozenTimesheetItemDto>();
+    }
+
+    public async Task<string> RestoreFrozenTimesheetAsync(RestoreFrozenTimesheetRequest request)
+    {
+        ApplyAuthorizationHeader();
+        var response = await HttpClient.PostAsJsonAsync("api/manager/timesheets/frozen/restore", request);
+        await EnsureSuccessAsync(response, "Restore frozen timesheet failed.");
+        var result = await ReadJsonAsync<ApiMessageResponse>(response);
+        return result?.Message ?? "Timesheet access restored.";
+    }
 }

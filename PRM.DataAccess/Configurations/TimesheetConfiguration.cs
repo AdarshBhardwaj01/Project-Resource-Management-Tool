@@ -14,6 +14,15 @@ public class TimesheetConfiguration : IEntityTypeConfiguration<Timesheet>
             .IsRequired()
             .HasConversion<string>()
             .HasMaxLength(20);
+        builder.Property(timesheet => timesheet.IsFrozen)
+            .IsRequired()
+            .HasDefaultValue(false);
+        builder.Property(timesheet => timesheet.IsUnlockedByManager)
+            .IsRequired()
+            .HasDefaultValue(false);
+        builder.Property(timesheet => timesheet.ReminderCount)
+            .IsRequired()
+            .HasDefaultValue(0);
         builder.HasIndex(timesheet => new { timesheet.UserId, timesheet.WeekStartDate })
             .IsUnique();
         builder.HasOne(timesheet => timesheet.Resource)

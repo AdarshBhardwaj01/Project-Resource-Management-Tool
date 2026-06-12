@@ -12,6 +12,12 @@ public class Timesheet
 
     public TimesheetStatus Status { get; set; }
 
+    public bool IsFrozen { get; set; }
+
+    public bool IsUnlockedByManager { get; set; }
+
+    public int ReminderCount { get; set; }
+
     public int TotalHours { get; set; }
 
     public Resource Resource { get; set; } = null!;

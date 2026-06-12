@@ -24,6 +24,8 @@ public class ProjectConfiguration : IEntityTypeConfiguration<Project>
             .IsRequired()
             .HasConversion<string>()
             .HasMaxLength(20);
+        builder.Property(project => project.AtRiskNotificationSentAt)
+            .IsRequired(false);
         builder.HasOne(project => project.Manager)
             .WithMany(user => user.ManagedProjects)
             .HasForeignKey(project => project.ManagerId)

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PRM.Business.Interfaces.Repositories;
 using PRM.DataAccess.Context;
 using PRM.Models.Entities;
+using PRM.Models.Enums;
 
 namespace PRM.DataAccess.Repositories;
 
@@ -56,6 +57,8 @@ public class TimesheetRepository : GenericRepository<Timesheet>, ITimesheetRepos
         CancellationToken cancellationToken = default)
     {
         return await DbSet
+            .Include(timesheet => timesheet.Resource)
+                .ThenInclude(resource => resource.User)
             .Include(timesheet => timesheet.Entries)
             .FirstOrDefaultAsync(
                 timesheet =>
@@ -87,5 +90,24 @@ public class TimesheetRepository : GenericRepository<Timesheet>, ITimesheetRepos
             .FirstOrDefaultAsync(
                 timesheet => timesheet.Id == timesheetId && timesheet.UserId == userId,
                 cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Timesheet>> GetFrozenTimesheetsForManagerAsync(
+        int managerUserId,
+        CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .Include(timesheet => timesheet.Resource)
+                .ThenInclude(resource => resource.User)
+            .Where(timesheet =>
+                timesheet.IsFrozen
+                && !timesheet.IsUnlockedByManager
+                && timesheet.Status != TimesheetStatus.Submitted
+                && timesheet.Resource.ManagerUserId == managerUserId
+                && timesheet.Resource.User.IsActive)
+            .OrderByDescending(timesheet => timesheet.WeekStartDate)
+            .ThenBy(timesheet => timesheet.Resource.User.FullName)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
     }
 }

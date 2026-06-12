@@ -230,6 +230,42 @@ public class ManagerController : ControllerBase
         }
     }
 
+    [HttpGet("timesheets/frozen")]
+    public async Task<ActionResult<IReadOnlyList<FrozenTimesheetItemDto>>> GetFrozenTimesheets(
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await _managerService.GetFrozenTimesheetsAsync(
+                GetCurrentUserId(),
+                cancellationToken);
+            return Ok(response);
+        }
+        catch (BusinessValidationException ex)
+        {
+            return BadRequest(new ApiErrorResponse { Message = ex.Message });
+        }
+    }
+
+    [HttpPost("timesheets/frozen/restore")]
+    public async Task<ActionResult<ApiMessageResponse>> RestoreFrozenTimesheet(
+        [FromBody] RestoreFrozenTimesheetRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var message = await _managerService.RestoreFrozenTimesheetAsync(
+                GetCurrentUserId(),
+                request,
+                cancellationToken);
+            return Ok(new ApiMessageResponse { Message = message });
+        }
+        catch (BusinessValidationException ex)
+        {
+            return BadRequest(new ApiErrorResponse { Message = ex.Message });
+        }
+    }
+
     [HttpPost("ai/skill-match")]
     public async Task<ActionResult<SkillMatchResponse>> GetSkillMatch(
         [FromBody] SkillMatchRequest request,

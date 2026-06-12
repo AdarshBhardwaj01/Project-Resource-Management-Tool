@@ -59,4 +59,11 @@ public interface IManagerService
         int managerUserId,
         TeamBuildRequest request,
         CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<FrozenTimesheetItemDto>> GetFrozenTimesheetsAsync(
+        int managerUserId,
+        CancellationToken cancellationToken = default);
+    Task<string> RestoreFrozenTimesheetAsync(
+        int managerUserId,
+        RestoreFrozenTimesheetRequest request,
+        CancellationToken cancellationToken = default);
 }

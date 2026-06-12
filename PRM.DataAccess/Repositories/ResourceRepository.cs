@@ -206,6 +206,7 @@ public class ResourceRepository : GenericRepository<Resource>, IResourceReposito
             .Include(resource => resource.User)
                 .ThenInclude(user => user.UserRoles)
                     .ThenInclude(userRole => userRole.Role)
+            .Include(resource => resource.Manager)
             .Include(resource => resource.Skills)
                 .ThenInclude(skill => skill.Skill)
             .Include(resource => resource.Allocations)

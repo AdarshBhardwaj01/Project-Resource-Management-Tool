@@ -58,6 +58,15 @@ public class SubmitTimesheetScreen
                 ConsoleHelper.Pause();
                 return;
             }
+            if (!preview.CanSubmit)
+            {
+                Console.WriteLine();
+                ConsoleHelper.WriteError(
+                    "Timesheet submission is not allowed for this week. " +
+                    "If your manager restored access, enter the Monday week start date (DD-MM-YYYY) for that week.");
+                ConsoleHelper.Pause();
+                return;
+            }
             if (preview.Projects.Count == 0)
             {
                 Console.WriteLine();

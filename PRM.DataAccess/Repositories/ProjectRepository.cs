@@ -116,6 +116,7 @@ public class ProjectRepository : GenericRepository<Project>, IProjectRepository
         CancellationToken cancellationToken = default)
     {
         return await DbSet
+            .Include(project => project.Manager)
             .Include(project => project.Milestones)
             .Include(project => project.Allocations)
                 .ThenInclude(allocation => allocation.Resource)
@@ -131,6 +132,7 @@ public class ProjectRepository : GenericRepository<Project>, IProjectRepository
         CancellationToken cancellationToken = default)
     {
         return await DbSet
+            .Include(project => project.Manager)
             .Include(project => project.Milestones)
             .Include(project => project.Allocations)
                 .ThenInclude(allocation => allocation.Resource)

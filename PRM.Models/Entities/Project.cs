@@ -18,6 +18,8 @@ public class Project
 
     public ProjectHealthStatus HealthStatus { get; set; } = ProjectHealthStatus.OnTrack;
 
+    public DateTime? AtRiskNotificationSentAt { get; set; }
+
     public int ManagerId { get; set; }
 
     public User Manager { get; set; } = null!;

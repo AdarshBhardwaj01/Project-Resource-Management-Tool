@@ -1,5 +1,7 @@
+using Microsoft.Extensions.Logging;
 using Moq;
 using PRM.Business.Interfaces.Repositories;
+using PRM.Business.Interfaces.Services;
 using PRM.Business.Services;
 using PRM.Models.Entities;
 using PRM.Models.Enums;
@@ -11,6 +13,9 @@ public class PrmSchedulerServiceTests
     private readonly Mock<IResourceRepository> _resourceRepoMock = new();
     private readonly Mock<IProjectRepository> _projectRepoMock = new();
     private readonly Mock<ISystemConfigRepository> _systemConfigRepoMock = new();
+    private readonly Mock<ITimesheetSchedulerService> _timesheetSchedulerMock = new();
+    private readonly Mock<IEmailNotificationService> _emailNotificationMock = new();
+    private readonly Mock<ILogger<PrmSchedulerService>> _loggerMock = new();
     private readonly PrmSchedulerService _sut;
 
     public PrmSchedulerServiceTests()
@@ -18,7 +23,10 @@ public class PrmSchedulerServiceTests
         _sut = new PrmSchedulerService(
             _resourceRepoMock.Object,
             _projectRepoMock.Object,
-            _systemConfigRepoMock.Object);
+            _systemConfigRepoMock.Object,
+            _timesheetSchedulerMock.Object,
+            _emailNotificationMock.Object,
+            _loggerMock.Object);
     }
 
     // ── RecomputeResourceAsync ────────────────────────────────────────────────
@@ -143,11 +151,15 @@ public class PrmSchedulerServiceTests
         _projectRepoMock
             .Setup(r => r.GetAllForHealthSchedulerAsync(default))
             .ReturnsAsync(new List<Project>());
+        _timesheetSchedulerMock
+            .Setup(s => s.ProcessTimesheetWorkflowAsync(default))
+            .Returns(Task.CompletedTask);
 
         await _sut.RunScheduledTasksAsync();
 
         _resourceRepoMock.Verify(r => r.GetAllActiveWithAllocationsAsync(default), Times.Once);
         _projectRepoMock.Verify(r => r.GetAllForHealthSchedulerAsync(default), Times.Once);
+        _timesheetSchedulerMock.Verify(s => s.ProcessTimesheetWorkflowAsync(default), Times.Once);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

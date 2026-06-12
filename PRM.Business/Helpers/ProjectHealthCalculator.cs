@@ -6,6 +6,28 @@ namespace PRM.Business.Helpers;
 
 public static class ProjectHealthCalculator
 {
+    public static ProjectHealthStatus ComputeForProject(
+        Project project,
+        DateTime today,
+        int maxWeeklyHours)
+    {
+        return Compute(
+            project,
+            GetActiveEmployeeAllocations(project, today),
+            today,
+            maxWeeklyHours);
+    }
+
+    public static IReadOnlyList<Allocation> GetActiveEmployeeAllocations(Project project, DateTime today)
+    {
+        return project.Allocations
+            .Where(allocation =>
+                allocation.ToDate.Date > today &&
+                allocation.Resource.User.IsActive &&
+                UserRoleHelper.HasRole(allocation.Resource.User, ApplicationRole.Employee))
+            .ToList();
+    }
+
     public static ProjectHealthStatus Compute(
         Project project,
         IReadOnlyList<Allocation> allocations,

@@ -109,6 +109,9 @@ namespace PRM.DataAccess.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<DateTime?>("AtRiskNotificationSentAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("ManagerId")
                         .HasColumnType("int");
 
@@ -282,6 +285,21 @@ namespace PRM.DataAccess.Migrations
 
                     b.Property<int>("TotalHours")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsFrozen")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsUnlockedByManager")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("ReminderCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");

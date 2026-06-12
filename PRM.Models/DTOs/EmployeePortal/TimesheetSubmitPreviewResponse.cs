@@ -10,5 +10,7 @@ public class TimesheetSubmitPreviewResponse
 
     public bool AlreadySubmitted { get; set; }
 
+    public bool CanSubmit { get; set; }
+
     public IReadOnlyList<TimesheetSubmitProjectItemDto> Projects { get; set; } = [];
 }

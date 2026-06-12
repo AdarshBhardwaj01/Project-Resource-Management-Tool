@@ -21,12 +21,10 @@ public class AuthServiceTests
         _sut = new AuthService(_userRepoMock.Object, _hasherMock.Object, _mapperMock.Object);
     }
 
-    // ── LoginAsync ───────────────────────────────────────────────────────────
 
     [Fact]
     public async Task LoginAsync_ValidCredentials_ReturnsLoginResponse()
     {
-        // Arrange
         var user = MakeActiveUser(id: 1, username: "alice", passwordHash: "hashed");
         _userRepoMock
             .Setup(r => r.GetByUsernameAsync("alice", default))
@@ -39,10 +37,8 @@ public class AuthServiceTests
             .Setup(m => m.Map<LoginResponse>(user))
             .Returns(expectedResponse);
 
-        // Act
         var result = await _sut.LoginAsync(new LoginRequest { Username = "alice", Password = "secret" });
 
-        // Assert
         Assert.Equal("alice", result.Username);
     }
 
@@ -96,12 +92,9 @@ public class AuthServiceTests
             _sut.LoginAsync(new LoginRequest { Username = username, Password = password }));
     }
 
-    // ── ChangePasswordAsync ───────────────────────────────────────────────────
-
     [Fact]
     public async Task ChangePasswordAsync_ValidRequest_ReturnsSuccessMessage()
     {
-        // Arrange
         var user = MakeActiveUser(id: 10, username: "dave");
         _userRepoMock
             .Setup(r => r.GetByIdAsync(10, default))
@@ -110,14 +103,12 @@ public class AuthServiceTests
             .Setup(h => h.Hash("NewPass@1"))
             .Returns("newHash");
 
-        // Act
         var result = await _sut.ChangePasswordAsync(10, new ChangePasswordRequest
         {
             NewPassword = "NewPass@1",
             ConfirmPassword = "NewPass@1"
         });
 
-        // Assert
         Assert.Contains("Password updated", result);
         Assert.Equal("newHash", user.PasswordHash);
         Assert.False(user.ForcePasswordChange);
@@ -163,7 +154,6 @@ public class AuthServiceTests
             }));
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static User MakeActiveUser(int id, string username, string passwordHash = "hash") =>
         new()

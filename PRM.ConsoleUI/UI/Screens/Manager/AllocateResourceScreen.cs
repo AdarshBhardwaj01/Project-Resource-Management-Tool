@@ -67,40 +67,14 @@ public class AllocateResourceScreen
 
     private async Task ShowAiResourceSearchAsync()
     {
-        try
+        while (true)
         {
-            var projects = await _managerApiClient.GetMyProjectsAsync();
-            if (projects.Count == 0)
-            {
-                ConsoleHelper.WriteHeader("Allocate Resource");
-                Console.WriteLine("You have no assigned projects.");
-                ConsoleHelper.Pause();
-                return;
-            }
-            ConsoleHelper.WriteHeader("Allocate Resource");
-            DisplayProjectOptions(projects);
-            var projectIdInput = ConsoleHelper.ReadInput("Step 1 — Select Project");
-            if (!int.TryParse(projectIdInput, out var projectId) || projectId <= 0)
-            {
-                ConsoleHelper.WriteError("Invalid Project ID.");
-                ConsoleHelper.Pause();
-                return;
-            }
-            var selectedProject = projects.FirstOrDefault(project => project.Id == projectId);
-            if (selectedProject is null)
-            {
-                ConsoleHelper.WriteError("Project not found or not assigned to you.");
-                ConsoleHelper.Pause();
-                return;
-            }
-            while (true)
+            try
             {
                 ConsoleHelper.ClearScreen();
-                ConsoleHelper.WriteHeader("Allocate Resource");
-                Console.WriteLine($"Step 1 — Select Project: {selectedProject.Name} ({selectedProject.Id})");
+                ConsoleHelper.WriteHeader("Find Resource using AI");
                 Console.WriteLine();
-                Console.WriteLine("Step 2 — Describe your requirement");
-                Console.WriteLine("Type what kind of resource you need:");
+                Console.WriteLine("Describe your requirement in plain English:");
                 Console.Write("> ");
                 var requirement = Console.ReadLine()?.Trim();
                 if (string.IsNullOrWhiteSpace(requirement))
@@ -112,66 +86,47 @@ public class AllocateResourceScreen
                 var response = await _managerApiClient.GetSkillMatchAsync(new SkillMatchRequest
                 {
                     Requirement = requirement,
-                    ProjectId = projectId
+                    SearchEntireOrganization = true,
+                    RequireSingleEmployeeMatch = true,
+                    MaxSuggestions = 1
                 });
                 Console.WriteLine();
                 if (response.Suggestions.Count == 0)
                 {
                     Console.WriteLine(
                         string.IsNullOrWhiteSpace(response.NoMatchReason)
-                            ? "No matching employees were found on your team."
+                            ? "No matching employee was found in the organization."
                             : response.NoMatchReason);
-                    ConsoleHelper.Pause();
+                }
+                else
+                {
+                    foreach (var suggestion in response.Suggestions)
+                    {
+                        Console.WriteLine($"{suggestion.RowNumber}. {suggestion.EmployeeName}");
+                        Console.WriteLine($"   Skills Match   : {suggestion.SkillsMatch}");
+                        Console.WriteLine($"   Availability   : {suggestion.Availability}");
+                        Console.WriteLine($"   Reason         : {suggestion.Reason}");
+                    }
+                }
+                Console.WriteLine();
+                Console.WriteLine(
+                    "Note: Suggestions are AI-generated. Verify availability and skills before allocating.");
+                Console.WriteLine();
+                ConsoleHelper.WriteActions(("B", "Back"));
+                var choice = ConsoleHelper.ReadActionChoice();
+                if (choice == "B" || string.IsNullOrWhiteSpace(choice))
+                {
                     return;
                 }
-                var rows = response.Suggestions.Select(suggestion => new (string Value, int Width)[]
-                {
-                    ($"{suggestion.RowNumber}.", AiMatchColumns[0].Width),
-                    (suggestion.EmployeeName, AiMatchColumns[1].Width),
-                    (suggestion.SkillsMatch, AiMatchColumns[2].Width),
-                    (suggestion.Availability, AiMatchColumns[3].Width),
-                    (suggestion.RecentActivity, AiMatchColumns[4].Width)
-                });
-                ConsoleHelper.WritePipeTable(AiMatchColumns, rows);
-                Console.WriteLine();
-                Console.WriteLine("Note: Suggestions are AI-generated. Verify before confirming.");
-                Console.WriteLine();
-                Console.Write("Select employee (enter #, or 0 to search again): ");
-                var selectionInput = Console.ReadLine()?.Trim();
-                if (string.IsNullOrWhiteSpace(selectionInput))
-                {
-                    continue;
-                }
-                if (!int.TryParse(selectionInput, out var selectionNumber))
-                {
-                    ConsoleHelper.WriteError("Invalid selection.");
-                    ConsoleHelper.Pause();
-                    continue;
-                }
-                if (selectionNumber == 0)
-                {
-                    continue;
-                }
-                var selectedSuggestion = response.Suggestions.FirstOrDefault(
-                    suggestion => suggestion.RowNumber == selectionNumber);
-                if (selectedSuggestion is null)
-                {
-                    ConsoleHelper.WriteError("Suggestion not found.");
-                    ConsoleHelper.Pause();
-                    continue;
-                }
-                await CompleteAllocationAsync(
-                    projectId,
-                    selectedSuggestion.EmployeeId,
-                    selectedProject.Name,
-                    useAiLabels: true);
+                ConsoleHelper.WriteError("Invalid option.");
+                ConsoleHelper.Pause();
+            }
+            catch (Exception ex)
+            {
+                ConsoleHelper.WriteError(ex.Message);
+                ConsoleHelper.Pause();
                 return;
             }
-        }
-        catch (Exception ex)
-        {
-            ConsoleHelper.WriteError(ex.Message);
-            ConsoleHelper.Pause();
         }
     }
 
