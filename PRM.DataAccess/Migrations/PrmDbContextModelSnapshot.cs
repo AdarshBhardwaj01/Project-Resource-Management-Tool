@@ -30,9 +30,6 @@ namespace PRM.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("EmployeeId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("FromDate")
                         .HasColumnType("datetime2");
 
@@ -42,107 +39,19 @@ namespace PRM.DataAccess.Migrations
                     b.Property<DateTime>("ToDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("UtilisationPercent")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmployeeId");
-
-                    b.HasIndex("ProjectId");
-
-                    b.ToTable("Allocations", (string)null);
-                });
-
-            modelBuilder.Entity("PRM.Models.Entities.Employee", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Department")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Designation")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("ManagerId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("UtilisationPercent")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("ManagerId");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("Employees", (string)null);
-                });
-
-            modelBuilder.Entity("PRM.Models.Entities.EmployeeSkill", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("EmployeeId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ProficiencyLevel")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("SkillId")
+                    b.Property<int>("UtilisationPercent")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SkillId");
+                    b.HasIndex("ProjectId");
 
-                    b.HasIndex("EmployeeId", "SkillId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
-                    b.ToTable("EmployeeSkills", (string)null);
+                    b.ToTable("Allocations", (string)null);
                 });
 
             modelBuilder.Entity("PRM.Models.Entities.Milestone", b =>
@@ -223,6 +132,91 @@ namespace PRM.DataAccess.Migrations
                     b.ToTable("Projects", (string)null);
                 });
 
+            modelBuilder.Entity("PRM.Models.Entities.Resource", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ManagerUserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("UtilisationPercent")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("ManagerUserId");
+
+                    b.ToTable("Resources", (string)null);
+                });
+
+            modelBuilder.Entity("PRM.Models.Entities.ResourceSkill", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ProficiencyLevel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("SkillId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SkillId");
+
+                    b.HasIndex("UserId", "SkillId")
+                        .IsUnique();
+
+                    b.ToTable("ResourceSkills", (string)null);
+                });
+
+            modelBuilder.Entity("PRM.Models.Entities.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("RoleName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleName")
+                        .IsUnique();
+
+                    b.ToTable("Roles", (string)null);
+                });
+
             modelBuilder.Entity("PRM.Models.Entities.Skill", b =>
                 {
                     b.Property<int>("Id")
@@ -281,9 +275,6 @@ namespace PRM.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("EmployeeId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -292,12 +283,15 @@ namespace PRM.DataAccess.Migrations
                     b.Property<int>("TotalHours")
                         .HasColumnType("int");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("WeekStartDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EmployeeId", "WeekStartDate")
+                    b.HasIndex("UserId", "WeekStartDate")
                         .IsUnique();
 
                     b.ToTable("Timesheets", (string)null);
@@ -346,6 +340,18 @@ namespace PRM.DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasDefaultValue("")
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Designation")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasDefaultValue("")
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -367,11 +373,6 @@ namespace PRM.DataAccess.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -388,60 +389,47 @@ namespace PRM.DataAccess.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("PRM.Models.Entities.UserRole", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("UserId", "RoleId")
+                        .IsUnique();
+
+                    b.ToTable("USER_ROLE", (string)null);
+                });
+
             modelBuilder.Entity("PRM.Models.Entities.Allocation", b =>
                 {
-                    b.HasOne("PRM.Models.Entities.Employee", "Employee")
-                        .WithMany("Allocations")
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("PRM.Models.Entities.Project", "Project")
                         .WithMany("Allocations")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Employee");
+                    b.HasOne("PRM.Models.Entities.Resource", "Resource")
+                        .WithMany("Allocations")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Project");
-                });
 
-            modelBuilder.Entity("PRM.Models.Entities.Employee", b =>
-                {
-                    b.HasOne("PRM.Models.Entities.User", "Manager")
-                        .WithMany()
-                        .HasForeignKey("ManagerId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("PRM.Models.Entities.User", "User")
-                        .WithOne("Employee")
-                        .HasForeignKey("PRM.Models.Entities.Employee", "UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Manager");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("PRM.Models.Entities.EmployeeSkill", b =>
-                {
-                    b.HasOne("PRM.Models.Entities.Employee", "Employee")
-                        .WithMany("Skills")
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PRM.Models.Entities.Skill", "Skill")
-                        .WithMany("EmployeeSkills")
-                        .HasForeignKey("SkillId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Employee");
-
-                    b.Navigation("Skill");
+                    b.Navigation("Resource");
                 });
 
             modelBuilder.Entity("PRM.Models.Entities.Milestone", b =>
@@ -466,15 +454,52 @@ namespace PRM.DataAccess.Migrations
                     b.Navigation("Manager");
                 });
 
-            modelBuilder.Entity("PRM.Models.Entities.Timesheet", b =>
+            modelBuilder.Entity("PRM.Models.Entities.Resource", b =>
                 {
-                    b.HasOne("PRM.Models.Entities.Employee", "Employee")
-                        .WithMany("Timesheets")
-                        .HasForeignKey("EmployeeId")
+                    b.HasOne("PRM.Models.Entities.User", "Manager")
+                        .WithMany()
+                        .HasForeignKey("ManagerUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("PRM.Models.Entities.User", "User")
+                        .WithOne("Resource")
+                        .HasForeignKey("PRM.Models.Entities.Resource", "UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Manager");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PRM.Models.Entities.ResourceSkill", b =>
+                {
+                    b.HasOne("PRM.Models.Entities.Skill", "Skill")
+                        .WithMany("ResourceSkills")
+                        .HasForeignKey("SkillId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("PRM.Models.Entities.Resource", "Resource")
+                        .WithMany("Skills")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Employee");
+                    b.Navigation("Resource");
+
+                    b.Navigation("Skill");
+                });
+
+            modelBuilder.Entity("PRM.Models.Entities.Timesheet", b =>
+                {
+                    b.HasOne("PRM.Models.Entities.Resource", "Resource")
+                        .WithMany("Timesheets")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Resource");
                 });
 
             modelBuilder.Entity("PRM.Models.Entities.TimesheetEntry", b =>
@@ -496,13 +521,23 @@ namespace PRM.DataAccess.Migrations
                     b.Navigation("Timesheet");
                 });
 
-            modelBuilder.Entity("PRM.Models.Entities.Employee", b =>
+            modelBuilder.Entity("PRM.Models.Entities.UserRole", b =>
                 {
-                    b.Navigation("Allocations");
+                    b.HasOne("PRM.Models.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("Skills");
+                    b.HasOne("PRM.Models.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("Timesheets");
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("PRM.Models.Entities.Project", b =>
@@ -514,9 +549,23 @@ namespace PRM.DataAccess.Migrations
                     b.Navigation("TimesheetEntries");
                 });
 
+            modelBuilder.Entity("PRM.Models.Entities.Resource", b =>
+                {
+                    b.Navigation("Allocations");
+
+                    b.Navigation("Skills");
+
+                    b.Navigation("Timesheets");
+                });
+
+            modelBuilder.Entity("PRM.Models.Entities.Role", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
             modelBuilder.Entity("PRM.Models.Entities.Skill", b =>
                 {
-                    b.Navigation("EmployeeSkills");
+                    b.Navigation("ResourceSkills");
                 });
 
             modelBuilder.Entity("PRM.Models.Entities.Timesheet", b =>
@@ -526,9 +575,11 @@ namespace PRM.DataAccess.Migrations
 
             modelBuilder.Entity("PRM.Models.Entities.User", b =>
                 {
-                    b.Navigation("Employee");
-
                     b.Navigation("ManagedProjects");
+
+                    b.Navigation("Resource");
+
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

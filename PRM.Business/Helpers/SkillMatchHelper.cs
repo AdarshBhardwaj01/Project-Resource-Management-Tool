@@ -46,15 +46,12 @@ public static class SkillMatchHelper
         var requireFullAvailability = RequiresFullAvailability(requirement);
         var minAvailablePercent = TryParseMinAvailablePercent(requirement);
         var availableFromDate = TryParseAvailableFromDate(requirement);
-
         if (requireFullAvailability && !minAvailablePercent.HasValue)
         {
             minAvailablePercent = 100;
         }
-
         var skillSource = RemoveParsedAvailabilityPhrases(requirement);
         var skillKeywords = ExtractSkillKeywords(skillSource);
-
         return new SkillMatchRequirementParse
         {
             SkillKeywords = skillKeywords,
@@ -64,7 +61,7 @@ public static class SkillMatchHelper
         };
     }
 
-    public static bool HasAssignedSkills(Employee employee) => employee.Skills.Count > 0;
+    public static bool HasAssignedSkills(Resource resource) => resource.Skills.Count > 0;
 
     public static bool HasAssignedSkills(string skillsDisplay) =>
         !string.IsNullOrWhiteSpace(skillsDisplay) &&
@@ -82,7 +79,6 @@ public static class SkillMatchHelper
     public static bool RequiresFullAvailability(string requirement)
     {
         var normalized = NormalizeToken(requirement);
-
         return normalized.Contains("fullyavailable")
             || normalized.Contains("fullavailability")
             || normalized.Contains("100free")
@@ -94,29 +90,24 @@ public static class SkillMatchHelper
     public static int? TryParseMinAvailablePercent(string requirement)
     {
         var match = MinAvailablePercentPattern.Match(requirement);
-
         if (!match.Success)
         {
             return null;
         }
-
         for (var groupIndex = 1; groupIndex <= 3; groupIndex++)
         {
             var value = match.Groups[groupIndex].Value;
-
             if (int.TryParse(value, out var percent) && percent is > 0 and <= 100)
             {
                 return percent;
             }
         }
-
         return null;
     }
 
     public static DateTime? TryParseAvailableFromDate(string requirement)
     {
         var dayMonthMatch = AvailableFromDayMonthPattern.Match(requirement);
-
         if (dayMonthMatch.Success
             && int.TryParse(dayMonthMatch.Groups[1].Value, out var day)
             && TryParseMonth(dayMonthMatch.Groups[2].Value, out var month))
@@ -124,9 +115,7 @@ public static class SkillMatchHelper
             var year = ParseYearOrDefault(dayMonthMatch.Groups[3].Value, month, day);
             return new DateTime(year, month, day);
         }
-
         var monthDayMatch = AvailableFromMonthDayPattern.Match(requirement);
-
         if (monthDayMatch.Success
             && int.TryParse(monthDayMatch.Groups[2].Value, out day)
             && TryParseMonth(monthDayMatch.Groups[1].Value, out month))
@@ -134,14 +123,11 @@ public static class SkillMatchHelper
             var year = ParseYearOrDefault(monthDayMatch.Groups[3].Value, month, day);
             return new DateTime(year, month, day);
         }
-
         var isoMatch = AvailableFromIsoDatePattern.Match(requirement);
-
         if (isoMatch.Success)
         {
             var formats = new[] { "dd-MM-yyyy", "dd/MM/yyyy" };
             var raw = isoMatch.Groups[1].Value.Replace('/', '-');
-
             if (DateTime.TryParseExact(
                     raw,
                     formats,
@@ -152,7 +138,6 @@ public static class SkillMatchHelper
                 return parsedDate.Date;
             }
         }
-
         return null;
     }
 
@@ -162,15 +147,27 @@ public static class SkillMatchHelper
         {
             return true;
         }
-
         if (!HasAssignedSkills(skillsDisplay))
         {
             return false;
         }
-
         var skillNames = SplitSkillNames(skillsDisplay);
-
         return skillKeywords.Any(keyword =>
+            skillNames.Any(skill => SkillMatchesKeyword(skill, keyword)));
+    }
+
+    public static bool MatchesAllSkillRequirements(string skillsDisplay, IReadOnlyList<string> skillKeywords)
+    {
+        if (skillKeywords.Count == 0)
+        {
+            return true;
+        }
+        if (!HasAssignedSkills(skillsDisplay))
+        {
+            return false;
+        }
+        var skillNames = SplitSkillNames(skillsDisplay);
+        return skillKeywords.All(keyword =>
             skillNames.Any(skill => SkillMatchesKeyword(skill, keyword)));
     }
 
@@ -182,15 +179,12 @@ public static class SkillMatchHelper
         {
             return false;
         }
-
         var availablePercent = GetAvailablePercent(candidate);
         var requiredPercent = parsed.RequiredAvailablePercent;
-
         if (requiredPercent > 0 && availablePercent < requiredPercent)
         {
             return false;
         }
-
         return true;
     }
 
@@ -218,12 +212,10 @@ public static class SkillMatchHelper
         {
             return 0;
         }
-
         if (candidate.IsOnBench && candidate.UtilisationPercent == 0)
         {
             return 100;
         }
-
         return Math.Max(0, 100 - candidate.UtilisationPercent);
     }
 
@@ -240,12 +232,10 @@ public static class SkillMatchHelper
             0 => "0% free",
             _ => $"{availablePercent}% free"
         };
-
         if (!availableFromDate.HasValue)
         {
             return availabilityText;
         }
-
         return $"{availabilityText} from {availableFromDate.Value:dd-MMM-yyyy}";
     }
 
@@ -260,12 +250,10 @@ public static class SkillMatchHelper
                     $"{parsed.RequiredAvailablePercent}% availability from " +
                     $"{parsed.AvailableFromDate.Value:dd-MMM-yyyy}.";
             }
-
             return
                 $"No employees on your team match the required skills with at least " +
                 $"{parsed.RequiredAvailablePercent}% availability.";
         }
-
         if (parsed.HasAvailabilityConstraint)
         {
             if (parsed.AvailableFromDate.HasValue)
@@ -274,40 +262,33 @@ public static class SkillMatchHelper
                     $"No employees on your team have at least {parsed.RequiredAvailablePercent}% availability " +
                     $"from {parsed.AvailableFromDate.Value:dd-MMM-yyyy}.";
             }
-
             return
                 $"No employees on your team have at least {parsed.RequiredAvailablePercent}% availability.";
         }
-
         return "No matching employees with the required skills were found on your team.";
     }
 
     public static string FormatMatchedSkills(string skillsDisplay, IReadOnlyList<string> skillKeywords)
     {
         var skillNames = SplitSkillNames(skillsDisplay);
-
         if (skillNames.Count == 0)
         {
             return skillsDisplay;
         }
-
         if (skillKeywords.Count == 0)
         {
             return string.Join(", ", skillNames.Take(2));
         }
-
         var matched = skillNames
             .Where(skill => skillKeywords.Any(keyword => SkillMatchesKeyword(skill, keyword)))
             .ToList();
-
         return matched.Count == 0 ? string.Empty : string.Join(", ", matched);
     }
 
-    public static string FormatRecentActivity(Employee employee, IReadOnlyList<string> skillKeywords)
+    public static string FormatRecentActivity(Resource resource, IReadOnlyList<string> skillKeywords)
     {
         var fourWeeksAgo = DateTime.UtcNow.Date.AddDays(-28);
-
-        var tags = employee.Timesheets
+        var tags = resource.Timesheets
             .Where(timesheet => timesheet.WeekStartDate.Date >= fourWeeksAgo)
             .SelectMany(timesheet => timesheet.Entries)
             .SelectMany(entry => entry.ActivityTags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
@@ -315,23 +296,19 @@ public static class SkillMatchHelper
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(tag => tag, StringComparer.OrdinalIgnoreCase)
             .ToList();
-
         if (tags.Count == 0)
         {
             return "(none)";
         }
-
         if (skillKeywords.Count > 0)
         {
             var matchedTag = tags.FirstOrDefault(tag =>
                 skillKeywords.Any(keyword => SkillMatchesKeyword(tag, keyword)));
-
             if (matchedTag is not null)
             {
                 return $"{matchedTag} ✓";
             }
         }
-
         return "(none)";
     }
 
@@ -343,26 +320,22 @@ public static class SkillMatchHelper
                 ? availability
                 : "100% free";
         }
-
         if (usedPercent >= 100)
         {
             return availability.Contains("from", StringComparison.OrdinalIgnoreCase)
                 ? availability
                 : "0% free";
         }
-
         if (usedPercent == 0)
         {
             return availability.Contains("from", StringComparison.OrdinalIgnoreCase)
                 ? availability
                 : "100% free";
         }
-
         if (availability.Contains('%'))
         {
             return availability;
         }
-
         return $"{100 - usedPercent}% free";
     }
 
@@ -372,29 +345,36 @@ public static class SkillMatchHelper
         {
             return 0;
         }
-
         var skillNames = SplitSkillNames(skillsDisplay);
-
         return skillKeywords.Count(keyword =>
             skillNames.Any(skill => SkillMatchesKeyword(skill, keyword)));
+    }
+
+    public static string BuildSingleEmployeeNoMatchReason(
+        SkillMatchRequirementParse parsed,
+        bool searchEntireOrganization)
+    {
+        var scope = searchEntireOrganization ? "the organization" : "your team";
+        if (parsed.SkillKeywords.Count > 1)
+        {
+            return $"No single employee in {scope} matches all the required skills together.";
+        }
+        return $"No single employee in {scope} matches the required skill.";
     }
 
     public static bool SkillMatchesKeyword(string skill, string keyword)
     {
         var normalizedSkill = NormalizeToken(skill);
         var normalizedKeyword = NormalizeToken(keyword);
-
         if (string.IsNullOrWhiteSpace(normalizedSkill) || string.IsNullOrWhiteSpace(normalizedKeyword))
         {
             return false;
         }
-
         if (normalizedSkill.Contains(normalizedKeyword, StringComparison.OrdinalIgnoreCase)
             || normalizedKeyword.Contains(normalizedSkill, StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
-
         return normalizedKeyword.Length >= 4
             && normalizedSkill.StartsWith(normalizedKeyword, StringComparison.OrdinalIgnoreCase);
     }
@@ -402,12 +382,10 @@ public static class SkillMatchHelper
     private static string RemoveParsedAvailabilityPhrases(string requirement)
     {
         var cleaned = requirement;
-
         cleaned = MinAvailablePercentPattern.Replace(cleaned, " ");
         cleaned = AvailableFromDayMonthPattern.Replace(cleaned, " ");
         cleaned = AvailableFromMonthDayPattern.Replace(cleaned, " ");
         cleaned = AvailableFromIsoDatePattern.Replace(cleaned, " ");
-
         return cleaned;
     }
 
@@ -415,7 +393,7 @@ public static class SkillMatchHelper
     {
         return requirement
             .Split([' ', ',', '.', ';', ':', '/', '-'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(word => word.Length > 2)
+            .Where(word => word.Length > 2 || IsShortSkillAcronym(word))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
@@ -427,6 +405,15 @@ public static class SkillMatchHelper
 
     private static string NormalizeToken(string value) =>
         new string(value.Where(char.IsLetterOrDigit).ToArray());
+
+    private static bool IsShortSkillAcronym(string word)
+    {
+        var normalized = NormalizeToken(word);
+        return normalized.Length >= 2
+            && normalized.Length <= 4
+            && normalized.All(char.IsLetter)
+            && normalized.Any(char.IsUpper);
+    }
 
     private static bool TryParseMonth(string monthToken, out int month)
     {
@@ -446,7 +433,6 @@ public static class SkillMatchHelper
             "dec" or "december" => 12,
             _ => 0
         };
-
         return month > 0;
     }
 
@@ -456,10 +442,8 @@ public static class SkillMatchHelper
         {
             return year;
         }
-
         var today = DateTime.UtcNow.Date;
         var candidate = new DateTime(today.Year, month, day);
-
         return candidate.Date < today ? today.Year + 1 : today.Year;
     }
 }

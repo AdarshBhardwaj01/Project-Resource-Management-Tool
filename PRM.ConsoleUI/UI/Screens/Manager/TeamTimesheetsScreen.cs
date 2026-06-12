@@ -39,19 +39,15 @@ public class TeamTimesheetsScreen
                 Console.WriteLine("Filter by week (DD-MM-YYYY) or press Enter for current week:");
                 Console.Write("Week: ");
                 var weekInput = Console.ReadLine()?.Trim();
-
                 DateTime? weekStartDate = null;
-
                 if (!string.IsNullOrWhiteSpace(weekInput))
                 {
                     weekStartDate = DateValidator.ParseRequired(weekInput, "Week");
                 }
-
                 var timesheets = await _managerApiClient.GetTeamTimesheetsAsync(weekStartDate);
                 Console.WriteLine();
                 Console.WriteLine($"Week: {timesheets.WeekStartDate}");
                 Console.WriteLine();
-
                 if (timesheets.Rows.Count == 0)
                 {
                     Console.WriteLine("No team timesheets found for this week.");
@@ -60,16 +56,13 @@ public class TeamTimesheetsScreen
                 {
                     WriteSummaryTable(timesheets.Rows);
                 }
-
                 Console.WriteLine();
                 ConsoleHelper.WriteActions(("V", "View employee timesheet detail"), ("B", "Back"));
                 var choice = ConsoleHelper.ReadActionChoice();
-
                 if (choice == "B" || string.IsNullOrWhiteSpace(choice))
                 {
                     return;
                 }
-
                 if (choice == "V")
                 {
                     if (timesheets.Rows.Count == 0)
@@ -78,11 +71,9 @@ public class TeamTimesheetsScreen
                         ConsoleHelper.Pause();
                         continue;
                     }
-
                     await ShowEmployeeDetailAsync(timesheets.Rows, weekStartDate);
                     return;
                 }
-
                 ConsoleHelper.WriteError("Invalid option.");
                 ConsoleHelper.Pause();
             }
@@ -100,30 +91,25 @@ public class TeamTimesheetsScreen
         DateTime? weekStartDate)
     {
         Console.WriteLine();
-        Console.Write("Enter employee name: ");
+        Console.Write("Enter resource name: ");
         var employeeName = Console.ReadLine()?.Trim();
-
         if (string.IsNullOrWhiteSpace(employeeName))
         {
             return;
         }
-
         var employee = rows.FirstOrDefault(row =>
             row.EmployeeName.Equals(employeeName, StringComparison.OrdinalIgnoreCase));
-
         if (employee is null)
         {
             ConsoleHelper.WriteError("Employee not found.");
             ConsoleHelper.Pause();
             return;
         }
-
         try
         {
             var detail = await _managerApiClient.GetEmployeeTimesheetDetailAsync(
                 employee.EmployeeId,
                 weekStartDate);
-
             ConsoleHelper.ClearScreen();
             ConsoleHelper.WriteHeader("Employee Timesheet Detail");
             Console.WriteLine($"Employee           : {detail.EmployeeName}");
@@ -134,14 +120,12 @@ public class TeamTimesheetsScreen
             Console.WriteLine($"Total Hours        : {detail.TotalHours}");
             Console.WriteLine();
             Console.WriteLine("Project Breakdown:");
-
             var detailRows = detail.Entries.Select(entry => new (string Value, int Width)[]
             {
                 (entry.ProjectName, DetailColumns[0].Width),
                 (entry.Hours.ToString(), DetailColumns[1].Width),
                 (entry.ActivityTags, DetailColumns[2].Width)
             });
-
             ConsoleHelper.WritePipeTable(DetailColumns, detailRows);
             Console.WriteLine();
             ConsoleHelper.Pause();
@@ -158,7 +142,6 @@ public class TeamTimesheetsScreen
         ConsoleHelper.WritePipeTableHeader(SummaryColumns);
         var tableWidth = ConsoleHelper.GetPipeTableWidth(SummaryColumns);
         Console.WriteLine(new string('-', tableWidth));
-
         foreach (var row in rows)
         {
             Console.Write(ConsoleHelper.FormatPipeTableCells(
@@ -169,7 +152,6 @@ public class TeamTimesheetsScreen
             WriteTimesheetStatus(row.Status, SummaryColumns[3].Width);
             Console.WriteLine();
         }
-
         Console.WriteLine(new string('-', tableWidth));
     }
 
@@ -179,17 +161,13 @@ public class TeamTimesheetsScreen
         {
             const string missedText = "MISSED \u26a0";
             Console.Write(missedText);
-
             if (padWidth.HasValue && missedText.Length < padWidth.Value)
             {
                 Console.Write(new string(' ', padWidth.Value - missedText.Length));
             }
-
             return;
         }
-
         var text = status;
-
         if (padWidth.HasValue && text.Length < padWidth.Value)
         {
             Console.Write(text.PadRight(padWidth.Value));

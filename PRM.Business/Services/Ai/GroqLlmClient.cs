@@ -21,17 +21,13 @@ internal sealed class GroqLlmClient : ILlmClient
         using var request = new HttpRequestMessage(HttpMethod.Post, "openai/v1/chat/completions");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
         request.Content = JsonContent.Create(new GroqChatCompletionRequest(prompt));
-
         using var response = await _httpClient.SendAsync(request, cancellationToken);
-
         if (!response.IsSuccessStatusCode)
         {
             return null;
         }
-
         var payload = await response.Content.ReadFromJsonAsync<GroqChatCompletionResponse>(
             cancellationToken: cancellationToken);
-
         return payload?.Choices?
             .FirstOrDefault()?
             .Message?
@@ -57,10 +53,8 @@ internal sealed class GroqLlmClient : ILlmClient
 
         [JsonPropertyName("model")]
         public string Model { get; set; }
-
         [JsonPropertyName("temperature")]
         public double Temperature { get; set; }
-
         [JsonPropertyName("messages")]
         public List<GroqChatMessage> Messages { get; set; }
     }
@@ -69,7 +63,6 @@ internal sealed class GroqLlmClient : ILlmClient
     {
         [JsonPropertyName("role")]
         public string Role { get; set; } = string.Empty;
-
         [JsonPropertyName("content")]
         public string Content { get; set; } = string.Empty;
     }

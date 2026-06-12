@@ -20,17 +20,13 @@ public class PrmBackgroundSchedulerService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("PRM background scheduler started.");
-
         while (!stoppingToken.IsCancellationRequested)
         {
             await RunSchedulerCycleAsync(stoppingToken);
-
             var intervalHours = await GetSchedulerIntervalHoursAsync(stoppingToken);
-
             _logger.LogInformation(
                 "PRM background scheduler sleeping for {IntervalHours} hour(s).",
                 intervalHours);
-
             try
             {
                 await Task.Delay(TimeSpan.FromHours(intervalHours), stoppingToken);
@@ -40,7 +36,6 @@ public class PrmBackgroundSchedulerService : BackgroundService
                 break;
             }
         }
-
         _logger.LogInformation("PRM background scheduler stopped.");
     }
 
@@ -50,7 +45,6 @@ public class PrmBackgroundSchedulerService : BackgroundService
         {
             using var scope = _serviceProvider.CreateScope();
             var schedulerService = scope.ServiceProvider.GetRequiredService<IPrmSchedulerService>();
-
             _logger.LogInformation("PRM background scheduler cycle started.");
             await schedulerService.RunScheduledTasksAsync(stoppingToken);
             _logger.LogInformation("PRM background scheduler cycle completed.");
@@ -66,9 +60,7 @@ public class PrmBackgroundSchedulerService : BackgroundService
         using var scope = _serviceProvider.CreateScope();
         var systemConfigRepository = scope.ServiceProvider.GetRequiredService<ISystemConfigRepository>();
         var config = await systemConfigRepository.GetSingletonAsync(stoppingToken);
-
         var intervalHours = config?.SchedulerIntervalHours ?? SystemDefaults.SchedulerIntervalHours;
-
         return intervalHours > 0
             ? intervalHours
             : SystemDefaults.SchedulerIntervalHours;

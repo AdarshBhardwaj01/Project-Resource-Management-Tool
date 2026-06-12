@@ -18,7 +18,6 @@ public class SystemConfigService : ISystemConfigService
     public async Task<SystemConfigDto> GetSystemConfigAsync(CancellationToken cancellationToken = default)
     {
         var config = await GetConfigOrThrowAsync(cancellationToken);
-
         return MapToDto(config);
     }
 
@@ -27,21 +26,16 @@ public class SystemConfigService : ISystemConfigService
         CancellationToken cancellationToken = default)
     {
         ValidateUpdateRequest(request);
-
         var config = await _systemConfigRepository.GetSingletonForUpdateAsync(cancellationToken)
             ?? throw new BusinessValidationException("System configuration not found.");
-
         config.MaxWeeklyHours = request.MaxWeeklyHours;
         config.SchedulerIntervalHours = request.SchedulerIntervalHours;
         config.LlmProvider = (LlmProvider)request.LlmProvider;
-
         if (!string.IsNullOrWhiteSpace(request.LlmApiKey))
         {
             config.LlmApiKey = request.LlmApiKey.Trim();
         }
-
         await _systemConfigRepository.SaveChangesAsync(cancellationToken);
-
         return "System configuration updated successfully.";
     }
 
@@ -78,7 +72,6 @@ public class SystemConfigService : ISystemConfigService
         {
             return "(not set)";
         }
-
         return new string('*', 27);
     }
 
@@ -88,17 +81,14 @@ public class SystemConfigService : ISystemConfigService
         {
             throw new BusinessValidationException("Max weekly hours must be greater than zero.");
         }
-
         if (request.SchedulerIntervalHours <= 0)
         {
             throw new BusinessValidationException("Scheduler interval must be greater than zero.");
         }
-
         if (!Enum.IsDefined(typeof(LlmProvider), request.LlmProvider))
         {
             throw new BusinessValidationException("Invalid LLM provider.");
         }
-
         if (request.LlmApiKey?.Length > 500)
         {
             throw new BusinessValidationException("LLM API key cannot exceed 500 characters.");

@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-
 #nullable disable
 
 namespace PRM.DataAccess.Migrations
@@ -23,7 +22,6 @@ namespace PRM.DataAccess.Migrations
                 {
                     table.PrimaryKey("PK_Skills", x => x.Id);
                 });
-
             migrationBuilder.CreateTable(
                 name: "SystemConfigs",
                 columns: table => new
@@ -39,7 +37,6 @@ namespace PRM.DataAccess.Migrations
                 {
                     table.PrimaryKey("PK_SystemConfigs", x => x.Id);
                 });
-
             migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
@@ -59,7 +56,6 @@ namespace PRM.DataAccess.Migrations
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
                 });
-
             migrationBuilder.CreateTable(
                 name: "Employees",
                 columns: table => new
@@ -84,7 +80,6 @@ namespace PRM.DataAccess.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
-
             migrationBuilder.CreateTable(
                 name: "Projects",
                 columns: table => new
@@ -109,7 +104,6 @@ namespace PRM.DataAccess.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
-
             migrationBuilder.CreateTable(
                 name: "EmployeeSkills",
                 columns: table => new
@@ -137,7 +131,6 @@ namespace PRM.DataAccess.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
-
             migrationBuilder.CreateTable(
                 name: "Timesheets",
                 columns: table => new
@@ -159,7 +152,6 @@ namespace PRM.DataAccess.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
-
             migrationBuilder.CreateTable(
                 name: "Allocations",
                 columns: table => new
@@ -188,7 +180,6 @@ namespace PRM.DataAccess.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
-
             migrationBuilder.CreateTable(
                 name: "Milestones",
                 columns: table => new
@@ -211,7 +202,6 @@ namespace PRM.DataAccess.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
-
             migrationBuilder.CreateTable(
                 name: "TimesheetEntries",
                 columns: table => new
@@ -239,109 +229,86 @@ namespace PRM.DataAccess.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
-
             migrationBuilder.CreateIndex(
                 name: "IX_Allocations_EmployeeId",
                 table: "Allocations",
                 column: "EmployeeId");
-
             migrationBuilder.CreateIndex(
                 name: "IX_Allocations_ProjectId",
                 table: "Allocations",
                 column: "ProjectId");
-
             migrationBuilder.CreateIndex(
                 name: "IX_Employees_UserId",
                 table: "Employees",
                 column: "UserId",
                 unique: true);
-
             migrationBuilder.CreateIndex(
                 name: "IX_EmployeeSkills_EmployeeId_SkillId",
                 table: "EmployeeSkills",
                 columns: new[] { "EmployeeId", "SkillId" },
                 unique: true);
-
             migrationBuilder.CreateIndex(
                 name: "IX_EmployeeSkills_SkillId",
                 table: "EmployeeSkills",
                 column: "SkillId");
-
             migrationBuilder.CreateIndex(
                 name: "IX_Milestones_ProjectId",
                 table: "Milestones",
                 column: "ProjectId");
-
             migrationBuilder.CreateIndex(
                 name: "IX_Projects_ManagerId",
                 table: "Projects",
                 column: "ManagerId");
-
             migrationBuilder.CreateIndex(
                 name: "IX_Skills_Name",
                 table: "Skills",
                 column: "Name",
                 unique: true);
-
             migrationBuilder.CreateIndex(
                 name: "IX_TimesheetEntries_ProjectId",
                 table: "TimesheetEntries",
                 column: "ProjectId");
-
             migrationBuilder.CreateIndex(
                 name: "IX_TimesheetEntries_TimesheetId",
                 table: "TimesheetEntries",
                 column: "TimesheetId");
-
             migrationBuilder.CreateIndex(
                 name: "IX_Timesheets_EmployeeId_WeekStartDate",
                 table: "Timesheets",
                 columns: new[] { "EmployeeId", "WeekStartDate" },
                 unique: true);
-
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",
                 table: "Users",
                 column: "Email",
                 unique: true);
-
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Username",
                 table: "Users",
                 column: "Username",
                 unique: true);
         }
-
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
                 name: "Allocations");
-
             migrationBuilder.DropTable(
                 name: "EmployeeSkills");
-
             migrationBuilder.DropTable(
                 name: "Milestones");
-
             migrationBuilder.DropTable(
                 name: "SystemConfigs");
-
             migrationBuilder.DropTable(
                 name: "TimesheetEntries");
-
             migrationBuilder.DropTable(
                 name: "Skills");
-
             migrationBuilder.DropTable(
                 name: "Projects");
-
             migrationBuilder.DropTable(
                 name: "Timesheets");
-
             migrationBuilder.DropTable(
                 name: "Employees");
-
             migrationBuilder.DropTable(
                 name: "Users");
         }

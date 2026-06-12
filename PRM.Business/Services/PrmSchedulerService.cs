@@ -9,52 +9,48 @@ namespace PRM.Business.Services;
 
 public class PrmSchedulerService : IPrmSchedulerService
 {
-    private readonly IEmployeeRepository _employeeRepository;
+    private readonly IResourceRepository _resourceRepository;
     private readonly IProjectRepository _projectRepository;
     private readonly ISystemConfigRepository _systemConfigRepository;
 
     public PrmSchedulerService(
-        IEmployeeRepository employeeRepository,
+        IResourceRepository resourceRepository,
         IProjectRepository projectRepository,
         ISystemConfigRepository systemConfigRepository)
     {
-        _employeeRepository = employeeRepository;
+        _resourceRepository = resourceRepository;
         _projectRepository = projectRepository;
         _systemConfigRepository = systemConfigRepository;
     }
 
     public async Task RunScheduledTasksAsync(CancellationToken cancellationToken = default)
     {
-        await RecomputeAllEmployeesInternalAsync(cancellationToken);
+        await RecomputeAllResourcesInternalAsync(cancellationToken);
         await RecomputeProjectHealthAsync(cancellationToken);
     }
 
-    public async Task RecomputeEmployeeAsync(
-        int employeeId,
+    public async Task RecomputeResourceAsync(
+        int userId,
         int? excludeAllocationId = null,
         CancellationToken cancellationToken = default)
     {
-        var employee = await _employeeRepository.GetByIdForSchedulerUpdateAsync(employeeId, cancellationToken);
-
-        if (employee is null || !employee.IsActive)
+        var resource = await _resourceRepository.GetByUserIdForSchedulerUpdateAsync(userId, cancellationToken);
+        if (resource is null || !resource.User.IsActive)
         {
             return;
         }
-
         var managerUserIds = await GetManagerUserIdSetAsync(cancellationToken);
         var today = DateTime.UtcNow.Date;
-
-        EmployeeSchedulerHelper.ApplySchedulerState(
-            employee,
+        ResourceSchedulerHelper.ApplySchedulerState(
+            resource,
             today,
             managerUserIds,
             excludeAllocationId);
-
-        await _employeeRepository.SaveChangesAsync(cancellationToken);
+        await _resourceRepository.SaveChangesAsync(cancellationToken);
     }
 
-    public Task RecomputeAllEmployeesAsync(CancellationToken cancellationToken = default) =>
-        RecomputeAllEmployeesInternalAsync(cancellationToken);
+    public Task RecomputeAllResourcesAsync(CancellationToken cancellationToken = default) =>
+        RecomputeAllResourcesInternalAsync(cancellationToken);
 
     public async Task RecomputeProjectHealthAsync(CancellationToken cancellationToken = default)
     {
@@ -63,7 +59,6 @@ public class PrmSchedulerService : IPrmSchedulerService
         var today = DateTime.UtcNow.Date;
         var projects = await _projectRepository.GetAllForHealthSchedulerAsync(cancellationToken);
         var hasChanges = false;
-
         foreach (var project in projects)
         {
             if (ApplyProjectHealth(project, today, maxWeeklyHours))
@@ -71,7 +66,6 @@ public class PrmSchedulerService : IPrmSchedulerService
                 hasChanges = true;
             }
         }
-
         if (hasChanges)
         {
             await _projectRepository.SaveChangesAsync(cancellationToken);
@@ -86,41 +80,35 @@ public class PrmSchedulerService : IPrmSchedulerService
         var maxWeeklyHours = config?.MaxWeeklyHours ?? SystemDefaults.MaxWeeklyHours;
         var today = DateTime.UtcNow.Date;
         var project = await _projectRepository.GetByIdForHealthSchedulerAsync(projectId, cancellationToken);
-
         if (project is null)
         {
             return;
         }
-
         if (ApplyProjectHealth(project, today, maxWeeklyHours))
         {
             await _projectRepository.SaveChangesAsync(cancellationToken);
         }
     }
 
-    private async Task RecomputeAllEmployeesInternalAsync(CancellationToken cancellationToken)
+    private async Task RecomputeAllResourcesInternalAsync(CancellationToken cancellationToken)
     {
-        var employees = await _employeeRepository.GetAllActiveWithAllocationsAsync(cancellationToken);
+        var resources = await _resourceRepository.GetAllActiveWithAllocationsAsync(cancellationToken);
         var managerUserIds = await GetManagerUserIdSetAsync(cancellationToken);
         var today = DateTime.UtcNow.Date;
         var hasChanges = false;
-
-        foreach (var employee in employees)
+        foreach (var resource in resources)
         {
-            var previousStatus = employee.Status;
-            var previousUtilisation = employee.UtilisationPercent;
-
-            EmployeeSchedulerHelper.ApplySchedulerState(employee, today, managerUserIds);
-
-            if (employee.Status != previousStatus || employee.UtilisationPercent != previousUtilisation)
+            var previousStatus = resource.Status;
+            var previousUtilisation = resource.UtilisationPercent;
+            ResourceSchedulerHelper.ApplySchedulerState(resource, today, managerUserIds);
+            if (resource.Status != previousStatus || resource.UtilisationPercent != previousUtilisation)
             {
                 hasChanges = true;
             }
         }
-
         if (hasChanges)
         {
-            await _employeeRepository.SaveChangesAsync(cancellationToken);
+            await _resourceRepository.SaveChangesAsync(cancellationToken);
         }
     }
 
@@ -135,21 +123,18 @@ public class PrmSchedulerService : IPrmSchedulerService
         var allocations = project.Allocations
             .Where(allocation =>
                 allocation.ToDate.Date > today &&
-                allocation.Employee.IsActive &&
-                allocation.Employee.User.Role == UserRole.Employee)
+                allocation.Resource.User.IsActive &&
+                UserRoleHelper.HasRole(allocation.Resource.User, ApplicationRole.Employee))
             .ToList();
-
         var healthStatus = ProjectHealthCalculator.Compute(
             project,
             allocations,
             today,
             maxWeeklyHours);
-
         if (project.HealthStatus == healthStatus)
         {
             return false;
         }
-
         project.HealthStatus = healthStatus;
         return true;
     }

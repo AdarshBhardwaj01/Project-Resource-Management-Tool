@@ -20,10 +20,10 @@ public static class DependencyInjectionExtensions
     {
         services.AddDbContext<PrmDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
-
         services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
         services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IResourceRepository, ResourceRepository>();
         services.AddScoped<ISkillRepository, SkillRepository>();
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IMilestoneRepository, MilestoneRepository>();
@@ -31,7 +31,6 @@ public static class DependencyInjectionExtensions
         services.AddScoped<ITimesheetRepository, TimesheetRepository>();
         services.AddScoped<ISystemConfigRepository, SystemConfigRepository>();
         services.AddScoped<IDataSeeder, DatabaseSeeder>();
-
         return services;
     }
 
@@ -48,7 +47,6 @@ public static class DependencyInjectionExtensions
     {
         var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
             ?? throw new InvalidOperationException("JWT settings are missing from configuration.");
-
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
@@ -63,9 +61,7 @@ public static class DependencyInjectionExtensions
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
                 };
             });
-
         services.AddAuthorization();
-
         return services;
     }
 
@@ -74,7 +70,6 @@ public static class DependencyInjectionExtensions
         services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new OpenApiInfo { Title = "PRM Tool API", Version = "v1" });
-
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Name = "Authorization",
@@ -84,7 +79,6 @@ public static class DependencyInjectionExtensions
                 In = ParameterLocation.Header,
                 Description = "Enter JWT token"
             });
-
             options.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
                 {
@@ -100,7 +94,6 @@ public static class DependencyInjectionExtensions
                 }
             });
         });
-
         return services;
     }
 

@@ -42,7 +42,6 @@ public class ViewMyAllocationsScreen
             {
                 ConsoleHelper.WriteHeader("My Allocations");
                 var allocations = await _employeePortalApiClient.GetMyAllocationsAsync();
-
                 if (allocations.Count == 0)
                 {
                     Console.WriteLine("You have no active project allocations.");
@@ -54,16 +53,13 @@ public class ViewMyAllocationsScreen
                     Console.WriteLine(
                         $"Total Utilisation: {allocations.Sum(allocation => allocation.UtilisationPercent)}%");
                 }
-
                 Console.WriteLine();
                 ConsoleHelper.WriteActions(("B", "Back"));
                 var choice = ConsoleHelper.ReadActionChoice();
-
                 if (choice == "B" || string.IsNullOrWhiteSpace(choice))
                 {
                     return;
                 }
-
                 ConsoleHelper.WriteError("Invalid option.");
                 ConsoleHelper.Pause();
             }
@@ -81,7 +77,6 @@ public class ViewMyAllocationsScreen
         ConsoleHelper.WritePipeTableHeader(Columns);
         var tableWidth = ConsoleHelper.GetPipeTableWidth(Columns);
         Console.WriteLine(new string('-', tableWidth));
-
         foreach (var allocation in allocations)
         {
             ConsoleHelper.WritePipeTableRow(
@@ -91,7 +86,6 @@ public class ViewMyAllocationsScreen
                 (allocation.ToDate, Columns[3].Width),
                 (allocation.Status, Columns[4].Width));
         }
-
         Console.WriteLine(new string('-', tableWidth));
     }
 }

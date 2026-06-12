@@ -1,6 +1,6 @@
 using PRM.ConsoleUI.Services;
 using PRM.ConsoleUI.UI.Helpers;
-using PRM.Models.DTOs.Employees;
+using PRM.Models.DTOs.Resources;
 
 namespace PRM.ConsoleUI.UI.Screens.Employees;
 
@@ -15,51 +15,36 @@ public class AddEmployeeScreen
 
     public async Task ShowAsync()
     {
-        ConsoleHelper.WriteHeader("Add Employee");
-
+        ConsoleHelper.WriteHeader("Add Resource");
+        Console.WriteLine("Note: Department and Designation are taken from the user's account.");
+        Console.WriteLine();
         var userIdInput = ConsoleHelper.ReadInput("User ID");
-
         if (!int.TryParse(userIdInput, out var userId) || userId <= 0)
         {
             ConsoleHelper.WriteError("Invalid User ID.");
             ConsoleHelper.Pause();
             return;
         }
-
-        var fullName = ConsoleHelper.ReadInput("Full Name");
-        var email = ConsoleHelper.ReadInput("Email");
-        var department = ConsoleHelper.ReadInput("Department");
-        var designation = ConsoleHelper.ReadInput("Designation");
-
         ConsoleHelper.WriteSeparator();
         Console.WriteLine("[S] Save     [B] Back");
         Console.Write("Enter choice: ");
-
         var action = Console.ReadLine()?.Trim().ToUpperInvariant();
-
         if (action == "B")
         {
             return;
         }
-
         if (action != "S")
         {
             ConsoleHelper.WriteError("Invalid choice.");
             ConsoleHelper.Pause();
             return;
         }
-
         try
         {
-            var message = await _employeeApiClient.CreateEmployeeAsync(new CreateEmployeeRequest
+            var message = await _employeeApiClient.CreateEmployeeAsync(new CreateResourceRequest
             {
-                UserId = userId,
-                FullName = fullName,
-                Email = email,
-                Department = department,
-                Designation = designation
+                UserId = userId
             });
-
             ConsoleHelper.WriteSuccess(message);
             ConsoleHelper.Pause();
         }

@@ -8,7 +8,6 @@ public interface IAiService
     Task<SkillMatchResponse> GetSkillMatchAsync(
         AiSkillMatchContext context,
         CancellationToken cancellationToken = default);
-
     Task<string> GetRiskSummaryAsync(
         AiRiskSummaryContext context,
         CancellationToken cancellationToken = default);

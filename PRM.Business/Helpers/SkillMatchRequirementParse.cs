@@ -21,7 +21,6 @@ public sealed class SkillMatchRequirementParse
             {
                 return 100;
             }
-
             return MinAvailablePercent ?? 0;
         }
     }

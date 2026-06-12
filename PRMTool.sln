@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PRM.Common", "PRM.Common\PR
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PRM.Api", "PRM.Api\PRM.Api.csproj", "{13FE6371-6238-0711-8DB1-0D9C077A3F71}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PRM.Tests", "PRM.Tests\PRM.Tests.csproj", "{B4C5D6E7-F8A9-4B2C-9D3E-0F1A2B3C4D5E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{13FE6371-6238-0711-8DB1-0D9C077A3F71}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13FE6371-6238-0711-8DB1-0D9C077A3F71}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{13FE6371-6238-0711-8DB1-0D9C077A3F71}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4C5D6E7-F8A9-4B2C-9D3E-0F1A2B3C4D5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4C5D6E7-F8A9-4B2C-9D3E-0F1A2B3C4D5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4C5D6E7-F8A9-4B2C-9D3E-0F1A2B3C4D5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4C5D6E7-F8A9-4B2C-9D3E-0F1A2B3C4D5E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

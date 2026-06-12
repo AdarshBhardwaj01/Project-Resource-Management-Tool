@@ -21,7 +21,6 @@ public abstract class ApiClientBase
         {
             throw new InvalidOperationException("You are not logged in. Please log in again.");
         }
-
         HttpClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", Session.Token);
     }
@@ -32,7 +31,6 @@ public abstract class ApiClientBase
         {
             return;
         }
-
         var message = await TryReadErrorMessageAsync(response);
         throw new InvalidOperationException(message ?? $"{fallbackMessage} (HTTP {(int)response.StatusCode})");
     }
@@ -40,18 +38,15 @@ public abstract class ApiClientBase
     protected static async Task<string?> TryReadErrorMessageAsync(HttpResponseMessage response)
     {
         var content = await response.Content.ReadAsStringAsync();
-
         if (string.IsNullOrWhiteSpace(content))
         {
             return null;
         }
-
         try
         {
             var error = JsonSerializer.Deserialize<ApiErrorResponse>(
                 content,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
             return error?.Message;
         }
         catch (JsonException)
@@ -63,12 +58,10 @@ public abstract class ApiClientBase
     protected static async Task<T?> ReadJsonAsync<T>(HttpResponseMessage response)
     {
         var content = await response.Content.ReadAsStringAsync();
-
         if (string.IsNullOrWhiteSpace(content))
         {
             return default;
         }
-
         return JsonSerializer.Deserialize<T>(
             content,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });

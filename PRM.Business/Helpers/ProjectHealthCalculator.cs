@@ -18,25 +18,21 @@ public static class ProjectHealthCalculator
         {
             return ProjectHealthStatus.AtRisk;
         }
-
         var lastWeekStart = today.AddDays(-7);
-
         foreach (var allocation in allocations.Where(allocation =>
                      AllocationDateRules.IsCurrentlyActive(allocation.FromDate, allocation.ToDate, today)))
         {
             var expectedHours = allocation.UtilisationPercent * maxWeeklyHours / 100;
             var loggedHours = project.TimesheetEntries
                 .Where(entry =>
-                    entry.Timesheet.EmployeeId == allocation.EmployeeId &&
+                    entry.Timesheet.UserId == allocation.UserId &&
                     entry.Timesheet.WeekStartDate.Date >= lastWeekStart.AddDays(-6))
                 .Sum(entry => entry.Hours);
-
             if (loggedHours < expectedHours)
             {
                 return ProjectHealthStatus.Attention;
             }
         }
-
         return ProjectHealthStatus.OnTrack;
     }
 }

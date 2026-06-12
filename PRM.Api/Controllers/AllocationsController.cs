@@ -6,7 +6,6 @@ using PRM.Models.DTOs.Allocations;
 using PRM.Models.DTOs.Auth;
 
 namespace PRM.Api.Controllers;
-
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Roles = "Admin")]
@@ -33,7 +32,6 @@ public class AllocationsController : ControllerBase
                 projectId,
                 status,
                 cancellationToken);
-
             return Ok(response);
         }
         catch (BusinessValidationException ex)

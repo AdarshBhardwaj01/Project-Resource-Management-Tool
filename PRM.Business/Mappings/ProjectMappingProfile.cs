@@ -21,14 +21,12 @@ public class ProjectMappingProfile : Profile
             .ForMember(dest => dest.Milestones, opt => opt.Ignore())
             .ForMember(dest => dest.Allocations, opt => opt.Ignore())
             .ForMember(dest => dest.TimesheetEntries, opt => opt.Ignore());
-
         CreateMap<Project, ProjectListItemDto>()
             .ForMember(dest => dest.ManagerName, opt => opt.MapFrom(src => src.Manager.FullName))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => FormatProjectStatus(src.Status)))
             .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.StartDate.ToString("dd-MMM-yy")))
             .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.EndDate.ToString("dd-MMM-yy")))
             .ForMember(dest => dest.MilestoneCount, opt => opt.MapFrom(src => src.Milestones.Count));
-
         CreateMap<Milestone, MilestoneItemDto>()
             .ForMember(dest => dest.DueDate, opt => opt.MapFrom(src => src.DueDate.ToString("dd-MMM-yy")))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => FormatMilestoneStatus(src.Status)));

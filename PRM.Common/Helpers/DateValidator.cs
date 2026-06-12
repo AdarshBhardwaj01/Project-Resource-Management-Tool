@@ -19,7 +19,6 @@ public static class DateValidator
         {
             throw new BusinessValidationException($"{fieldName} is required.");
         }
-
         if (DateTime.TryParseExact(
                 input.Trim(),
                 SupportedFormats,
@@ -29,7 +28,6 @@ public static class DateValidator
         {
             return parsedDate.Date;
         }
-
         throw new BusinessValidationException($"{fieldName} must be a valid date (e.g. 01-01-2026).");
     }
 }

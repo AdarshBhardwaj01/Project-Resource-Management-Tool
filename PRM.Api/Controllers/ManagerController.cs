@@ -8,7 +8,6 @@ using PRM.Models.DTOs.Auth;
 using PRM.Models.DTOs.Manager;
 
 namespace PRM.Api.Controllers;
-
 [ApiController]
 [Route("api/manager")]
 [Authorize(Roles = "Manager")]
@@ -62,7 +61,6 @@ public class ManagerController : ControllerBase
                 GetCurrentUserId(),
                 projectId,
                 cancellationToken);
-
             return Ok(project);
         }
         catch (BusinessValidationException ex)
@@ -82,7 +80,6 @@ public class ManagerController : ControllerBase
                 GetCurrentUserId(),
                 request,
                 cancellationToken);
-
             return Ok(new ApiMessageResponse { Message = message });
         }
         catch (BusinessValidationException ex)
@@ -137,7 +134,6 @@ public class ManagerController : ControllerBase
                 GetCurrentUserId(),
                 request,
                 cancellationToken);
-
             return Ok(validation);
         }
         catch (BusinessValidationException ex)
@@ -157,7 +153,6 @@ public class ManagerController : ControllerBase
                 GetCurrentUserId(),
                 projectId,
                 cancellationToken);
-
             return Ok(allocations);
         }
         catch (BusinessValidationException ex)
@@ -177,7 +172,6 @@ public class ManagerController : ControllerBase
                 GetCurrentUserId(),
                 id,
                 cancellationToken);
-
             return Ok(new ApiMessageResponse { Message = message });
         }
         catch (BusinessValidationException ex)
@@ -194,17 +188,14 @@ public class ManagerController : ControllerBase
         try
         {
             DateTime? weekStartDate = null;
-
             if (!string.IsNullOrWhiteSpace(weekStart))
             {
                 weekStartDate = DateValidator.ParseRequired(weekStart, "Week start date");
             }
-
             var response = await _managerService.GetTeamTimesheetsAsync(
                 GetCurrentUserId(),
                 weekStartDate,
                 cancellationToken);
-
             return Ok(response);
         }
         catch (BusinessValidationException ex)
@@ -222,18 +213,15 @@ public class ManagerController : ControllerBase
         try
         {
             DateTime? weekStartDate = null;
-
             if (!string.IsNullOrWhiteSpace(weekStart))
             {
                 weekStartDate = DateValidator.ParseRequired(weekStart, "Week start date");
             }
-
             var response = await _managerService.GetEmployeeTimesheetDetailAsync(
                 GetCurrentUserId(),
                 employeeId,
                 weekStartDate,
                 cancellationToken);
-
             return Ok(response);
         }
         catch (BusinessValidationException ex)
@@ -253,7 +241,25 @@ public class ManagerController : ControllerBase
                 GetCurrentUserId(),
                 request,
                 cancellationToken);
+            return Ok(response);
+        }
+        catch (BusinessValidationException ex)
+        {
+            return BadRequest(new ApiErrorResponse { Message = ex.Message });
+        }
+    }
 
+    [HttpPost("ai/team-build")]
+    public async Task<ActionResult<TeamBuildResponse>> BuildTeam(
+        [FromBody] TeamBuildRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await _managerService.BuildTeamAsync(
+                GetCurrentUserId(),
+                request,
+                cancellationToken);
             return Ok(response);
         }
         catch (BusinessValidationException ex)
@@ -273,7 +279,6 @@ public class ManagerController : ControllerBase
                 GetCurrentUserId(),
                 projectId,
                 cancellationToken);
-
             return Ok(response);
         }
         catch (BusinessValidationException ex)
@@ -285,12 +290,10 @@ public class ManagerController : ControllerBase
     private int GetCurrentUserId()
     {
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
         if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
         {
             throw new BusinessValidationException("Invalid user session.");
         }
-
         return userId;
     }
 }

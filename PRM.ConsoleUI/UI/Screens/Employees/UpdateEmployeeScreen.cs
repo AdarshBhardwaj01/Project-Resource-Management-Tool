@@ -1,6 +1,6 @@
 using PRM.ConsoleUI.Services;
 using PRM.ConsoleUI.UI.Helpers;
-using PRM.Models.DTOs.Employees;
+using PRM.Models.DTOs.Resources;
 
 namespace PRM.ConsoleUI.UI.Screens.Employees;
 
@@ -16,54 +16,41 @@ public class UpdateEmployeeScreen
     public async Task ShowAsync()
     {
         ConsoleHelper.WriteHeader("Update Employee");
-
-        var employeeIdInput = ConsoleHelper.ReadInput("Employee ID");
-
-        if (!int.TryParse(employeeIdInput, out var employeeId))
+        var userIdInput = ConsoleHelper.ReadInput("User ID");
+        if (!int.TryParse(userIdInput, out var userId))
         {
-            ConsoleHelper.WriteError("Invalid Employee ID.");
+            ConsoleHelper.WriteError("Invalid User ID.");
             ConsoleHelper.Pause();
             return;
         }
-
         try
         {
-            var employee = await _employeeApiClient.GetEmployeeAsync(employeeId);
-
+            var resource = await _employeeApiClient.GetEmployeeAsync(userId);
             Console.WriteLine();
-            Console.WriteLine($"Updating: {employee.FullName} ({employee.Department})");
+            Console.WriteLine($"Updating: {resource.FullName} ({resource.Department})");
             Console.WriteLine("Leave a field blank to keep the current value.");
             Console.WriteLine();
-
-            var fullName = ReadOptional("Full Name", employee.FullName);
-            var department = ReadOptional("Department", employee.Department);
-            var designation = ReadOptional("Designation", employee.Designation);
-
+            var department = ReadOptional("Department", resource.Department);
+            var designation = ReadOptional("Designation", resource.Designation);
             ConsoleHelper.WriteSeparator();
             Console.WriteLine("[S] Save     [B] Back");
             Console.Write("Enter choice: ");
-
             var action = Console.ReadLine()?.Trim().ToUpperInvariant();
-
             if (action == "B")
             {
                 return;
             }
-
             if (action != "S")
             {
                 ConsoleHelper.WriteError("Invalid choice.");
                 ConsoleHelper.Pause();
                 return;
             }
-
-            var message = await _employeeApiClient.UpdateEmployeeAsync(employeeId, new UpdateEmployeeRequest
+            var message = await _employeeApiClient.UpdateEmployeeAsync(userId, new UpdateResourceRequest
             {
-                FullName = fullName,
                 Department = department,
                 Designation = designation
             });
-
             ConsoleHelper.WriteSuccess(message);
             ConsoleHelper.Pause();
         }
@@ -78,7 +65,6 @@ public class UpdateEmployeeScreen
     {
         Console.Write($"{label} [{currentValue}] : ");
         var input = Console.ReadLine()?.Trim();
-
         return string.IsNullOrWhiteSpace(input) ? currentValue : input;
     }
 }

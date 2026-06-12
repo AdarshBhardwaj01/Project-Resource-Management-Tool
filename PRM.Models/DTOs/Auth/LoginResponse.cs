@@ -12,7 +12,7 @@ public class LoginResponse
 
     public string Username { get; set; } = string.Empty;
 
-    public UserRole Role { get; set; }
+    public ApplicationRole Role { get; set; }
 
     public bool ForcePasswordChange { get; set; }
 }

@@ -28,7 +28,6 @@ public class MilestoneRepository : GenericRepository<Milestone>, IMilestoneRepos
             .Where(milestone => milestone.ProjectId == projectId)
             .Select(milestone => (int?)milestone.SortOrder)
             .MaxAsync(cancellationToken);
-
         return maxSortOrder ?? 0;
     }
 }

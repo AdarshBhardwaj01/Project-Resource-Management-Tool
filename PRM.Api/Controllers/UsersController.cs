@@ -7,7 +7,6 @@ using PRM.Models.DTOs.Auth;
 using PRM.Models.DTOs.Users;
 
 namespace PRM.Api.Controllers;
-
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Roles = "Admin")]
@@ -112,12 +111,10 @@ public class UsersController : ControllerBase
     private int GetCurrentUserId()
     {
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
         if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
         {
             throw new BusinessValidationException("Invalid user session.");
         }
-
         return userId;
     }
 }

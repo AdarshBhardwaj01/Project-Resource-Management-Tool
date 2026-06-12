@@ -50,52 +50,42 @@ public class ViewMyTimesheetsScreen
             {
                 ConsoleHelper.WriteHeader("My Timesheets");
                 var timesheets = await _employeePortalApiClient.GetMyTimesheetsAsync();
-
                 if (timesheets.Count == 0)
                 {
                     Console.WriteLine("You have not submitted any timesheets yet.");
                     Console.WriteLine();
                     ConsoleHelper.WriteActions(("B", "Back"));
                     var emptyChoice = ConsoleHelper.ReadActionChoice();
-
                     if (emptyChoice == "B" || string.IsNullOrWhiteSpace(emptyChoice))
                     {
                         return;
                     }
-
                     ConsoleHelper.WriteError("Invalid option.");
                     ConsoleHelper.Pause();
                     continue;
                 }
-
                 WriteHistoryTable(timesheets);
                 Console.WriteLine();
                 ConsoleHelper.WriteActions(("V", "View week details"), ("B", "Back"));
                 var choice = ConsoleHelper.ReadActionChoice();
-
                 if (choice == "B" || string.IsNullOrWhiteSpace(choice))
                 {
                     return;
                 }
-
                 if (choice != "V")
                 {
                     ConsoleHelper.WriteError("Invalid option.");
                     ConsoleHelper.Pause();
                     continue;
                 }
-
                 Console.WriteLine();
                 Console.Write("Enter week start date (DD-MM-YYYY): ");
                 var weekStart = Console.ReadLine()?.Trim();
-
                 if (string.IsNullOrWhiteSpace(weekStart))
                 {
                     continue;
                 }
-
                 EmployeeTimesheetHistoryItemDto? selectedTimesheet;
-
                 try
                 {
                     selectedTimesheet = FindTimesheetByWeekInput(timesheets, weekStart);
@@ -106,14 +96,12 @@ public class ViewMyTimesheetsScreen
                     ConsoleHelper.Pause();
                     continue;
                 }
-
                 if (selectedTimesheet is null)
                 {
                     ConsoleHelper.WriteError("Timesheet not found for that week.");
                     ConsoleHelper.Pause();
                     continue;
                 }
-
                 await ShowDetailAsync(selectedTimesheet);
             }
             catch (Exception ex)
@@ -134,14 +122,11 @@ public class ViewMyTimesheetsScreen
                 ConsoleHelper.ClearScreen();
                 var detail = await _employeePortalApiClient.GetTimesheetDetailAsync(timesheet.TimesheetId);
                 var tableWidth = ConsoleHelper.GetPipeTableWidth(DetailColumns);
-
                 ConsoleHelper.WriteProjectLabel(
                     $"Week: {detail.WeekStartDate} - Status: {detail.Status}",
                     tableWidth);
-
                 ConsoleHelper.WritePipeTableHeader(DetailColumns);
                 Console.WriteLine(new string('-', tableWidth));
-
                 foreach (var entry in detail.Entries)
                 {
                     ConsoleHelper.WritePipeTableRow(
@@ -149,18 +134,15 @@ public class ViewMyTimesheetsScreen
                         (entry.Hours.ToString(), DetailColumns[1].Width),
                         (entry.ActivityTags, DetailColumns[2].Width));
                 }
-
                 Console.WriteLine(new string('-', tableWidth));
                 Console.WriteLine($"Total: {detail.TotalHours} hrs");
                 Console.WriteLine();
                 ConsoleHelper.WriteActions(("B", "Back"));
                 var choice = ConsoleHelper.ReadActionChoice();
-
                 if (choice == "B" || string.IsNullOrWhiteSpace(choice))
                 {
                     return;
                 }
-
                 ConsoleHelper.WriteError("Invalid option.");
                 ConsoleHelper.Pause();
             }
@@ -178,7 +160,6 @@ public class ViewMyTimesheetsScreen
         ConsoleHelper.WritePipeTableHeader(HistoryColumns);
         var tableWidth = ConsoleHelper.GetPipeTableWidth(HistoryColumns);
         Console.WriteLine(new string('-', tableWidth));
-
         foreach (var timesheet in timesheets)
         {
             Console.Write(ConsoleHelper.FormatPipeTableCells(
@@ -188,7 +169,6 @@ public class ViewMyTimesheetsScreen
             WriteTimesheetStatus(timesheet.Status, HistoryColumns[2].Width);
             Console.WriteLine();
         }
-
         Console.WriteLine(new string('-', tableWidth));
     }
 
@@ -198,7 +178,6 @@ public class ViewMyTimesheetsScreen
     {
         var parsedInput = ParseWeekStartDate(weekStartInput);
         var normalizedWeekStart = WeekHelper.GetWeekStartDate(parsedInput);
-
         return timesheets.FirstOrDefault(timesheet =>
             ParseWeekStartDate(timesheet.WeekStartDate).Date == normalizedWeekStart.Date);
     }
@@ -214,7 +193,6 @@ public class ViewMyTimesheetsScreen
         {
             return parsedDate.Date;
         }
-
         throw new BusinessValidationException("Week start date must be a valid date (DD-MM-YYYY).");
     }
 
@@ -224,17 +202,13 @@ public class ViewMyTimesheetsScreen
         {
             const string missedText = "MISSED \u26a0";
             Console.Write(missedText);
-
             if (padWidth.HasValue && missedText.Length < padWidth.Value)
             {
                 Console.Write(new string(' ', padWidth.Value - missedText.Length));
             }
-
             return;
         }
-
         var text = status;
-
         if (padWidth.HasValue && text.Length < padWidth.Value)
         {
             Console.Write(text.PadRight(padWidth.Value));

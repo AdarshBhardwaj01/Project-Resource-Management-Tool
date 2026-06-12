@@ -16,7 +16,6 @@ public class ProjectRepository : GenericRepository<Project>, IProjectRepository
     public async Task<bool> ExistsByNameAsync(string name, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-
         return await DbSet.AnyAsync(
             project => project.Name == name.Trim(),
             cancellationToken);
@@ -38,12 +37,10 @@ public class ProjectRepository : GenericRepository<Project>, IProjectRepository
             .Include(project => project.Manager)
             .Include(project => project.Milestones)
             .AsQueryable();
-
         if (status.HasValue)
         {
             query = query.Where(project => project.Status == status.Value);
         }
-
         return await query
             .OrderBy(project => project.Id)
             .AsNoTracking()
@@ -69,8 +66,8 @@ public class ProjectRepository : GenericRepository<Project>, IProjectRepository
             .Where(project => project.ManagerId == managerUserId)
             .Include(project => project.Milestones)
             .Include(project => project.Allocations)
-                .ThenInclude(allocation => allocation.Employee)
-                    .ThenInclude(employee => employee.User)
+                .ThenInclude(allocation => allocation.Resource)
+                    .ThenInclude(resource => resource.User)
             .Include(project => project.TimesheetEntries)
                 .ThenInclude(entry => entry.Timesheet)
             .OrderBy(project => project.Name)
@@ -96,11 +93,11 @@ public class ProjectRepository : GenericRepository<Project>, IProjectRepository
         return await DbSet
             .Include(project => project.Milestones)
             .Include(project => project.Allocations)
-                .ThenInclude(allocation => allocation.Employee)
-                    .ThenInclude(employee => employee.User)
+                .ThenInclude(allocation => allocation.Resource)
+                    .ThenInclude(resource => resource.User)
             .Include(project => project.TimesheetEntries)
                 .ThenInclude(entry => entry.Timesheet)
-                    .ThenInclude(timesheet => timesheet.Employee)
+                    .ThenInclude(timesheet => timesheet.Resource)
             .FirstOrDefaultAsync(
                 project => project.Id == projectId && project.ManagerId == managerUserId,
                 cancellationToken);
@@ -121,8 +118,8 @@ public class ProjectRepository : GenericRepository<Project>, IProjectRepository
         return await DbSet
             .Include(project => project.Milestones)
             .Include(project => project.Allocations)
-                .ThenInclude(allocation => allocation.Employee)
-                    .ThenInclude(employee => employee.User)
+                .ThenInclude(allocation => allocation.Resource)
+                    .ThenInclude(resource => resource.User)
             .Include(project => project.TimesheetEntries)
                 .ThenInclude(entry => entry.Timesheet)
             .OrderBy(project => project.Id)
@@ -136,8 +133,8 @@ public class ProjectRepository : GenericRepository<Project>, IProjectRepository
         return await DbSet
             .Include(project => project.Milestones)
             .Include(project => project.Allocations)
-                .ThenInclude(allocation => allocation.Employee)
-                    .ThenInclude(employee => employee.User)
+                .ThenInclude(allocation => allocation.Resource)
+                    .ThenInclude(resource => resource.User)
             .Include(project => project.TimesheetEntries)
                 .ThenInclude(entry => entry.Timesheet)
             .FirstOrDefaultAsync(project => project.Id == projectId, cancellationToken);

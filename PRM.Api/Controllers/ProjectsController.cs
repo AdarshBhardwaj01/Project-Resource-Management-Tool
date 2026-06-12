@@ -6,7 +6,6 @@ using PRM.Models.DTOs.Auth;
 using PRM.Models.DTOs.Projects;
 
 namespace PRM.Api.Controllers;
-
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Roles = "Admin")]

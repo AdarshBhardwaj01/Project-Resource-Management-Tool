@@ -15,27 +15,28 @@ public static class BusinessServiceExtensions
         IConfiguration configuration)
     {
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
-
         services.AddAutoMapper(typeof(AuthMappingProfile).Assembly);
-
         services.AddHttpClient("GeminiLlm", client =>
         {
             client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
             client.Timeout = TimeSpan.FromSeconds(60);
         });
-
         services.AddHttpClient("GroqLlm", client =>
         {
             client.BaseAddress = new Uri("https://api.groq.com/");
             client.Timeout = TimeSpan.FromSeconds(60);
         });
-
+        services.AddHttpClient("GemmaLlm", client =>
+        {
+            client.BaseAddress = new Uri("http://164.52.211.238/");
+            client.Timeout = TimeSpan.FromSeconds(120);
+        });
         services.AddScoped<IAiService, PrmAiService>();
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
-        services.AddScoped<IEmployeeService, EmployeeService>();
+        services.AddScoped<IResourceService, ResourceService>();
         services.AddScoped<IProjectService, ProjectService>();
         services.AddScoped<IAllocationService, AllocationService>();
         services.AddScoped<ISystemConfigService, SystemConfigService>();
@@ -43,7 +44,6 @@ public static class BusinessServiceExtensions
         services.AddScoped<IPrmSchedulerService, PrmSchedulerService>();
         services.AddScoped<IManagerService, ManagerService>();
         services.AddScoped<IEmployeePortalService, EmployeePortalService>();
-
         return services;
     }
 }

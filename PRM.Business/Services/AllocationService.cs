@@ -25,25 +25,20 @@ public class AllocationService : IAllocationService
         if (!string.IsNullOrWhiteSpace(status))
         {
             var normalizedStatus = status.Trim().ToUpperInvariant();
-
             if (normalizedStatus is not ("ACTIVE" or "EXPIRED"))
             {
                 throw new BusinessValidationException("Invalid status filter. Use ACTIVE or EXPIRED.");
             }
-
             status = normalizedStatus;
         }
-
         var allocations = await _allocationRepository.GetAllAsync(
             employeeId,
             projectId,
             status,
             cancellationToken);
-
         var allocationDtos = allocations
             .Select(MapToListItem)
             .ToList();
-
         return new AllocationListResponse
         {
             Allocations = allocationDtos,
@@ -56,13 +51,12 @@ public class AllocationService : IAllocationService
     private static AllocationListItemDto MapToListItem(Allocation allocation)
     {
         var today = DateTime.UtcNow.Date;
-
         return new AllocationListItemDto
         {
             Id = allocation.Id,
-            EmployeeName = allocation.Employee.FullName,
+            EmployeeName = allocation.Resource.User.FullName,
             ProjectName = allocation.Project.Name,
-            Role = allocation.Employee.Designation,
+            Role = allocation.Resource.User.Designation,
             UtilisationPercent = allocation.UtilisationPercent,
             FromDate = allocation.FromDate.ToString("dd-MMM-yy"),
             ToDate = allocation.ToDate.ToString("dd-MMM-yy"),

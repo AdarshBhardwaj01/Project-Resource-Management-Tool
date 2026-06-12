@@ -5,38 +5,36 @@ namespace PRM.Business.Services;
 
 public class EmployeeStatusSchedulerService : IEmployeeStatusSchedulerService
 {
-    private readonly IEmployeeRepository _employeeRepository;
+    private readonly IResourceRepository _resourceRepository;
     private readonly IPrmSchedulerService _prmSchedulerService;
 
     public EmployeeStatusSchedulerService(
-        IEmployeeRepository employeeRepository,
+        IResourceRepository resourceRepository,
         IPrmSchedulerService prmSchedulerService)
     {
-        _employeeRepository = employeeRepository;
+        _resourceRepository = resourceRepository;
         _prmSchedulerService = prmSchedulerService;
     }
 
-    public async Task RecomputeEmployeeStatusByUserIdAsync(
+    public async Task RecomputeResourceStatusByUserIdAsync(
         int userId,
         CancellationToken cancellationToken = default)
     {
-        var employee = await _employeeRepository.GetByUserIdAsync(userId, cancellationToken);
-
-        if (employee is null || !employee.IsActive)
+        var resource = await _resourceRepository.GetByUserIdAsync(userId, cancellationToken);
+        if (resource is null)
         {
             return;
         }
-
-        await RecomputeEmployeeStatusAsync(employee.Id, cancellationToken: cancellationToken);
+        await RecomputeResourceStatusAsync(userId, cancellationToken: cancellationToken);
     }
 
-    public Task RecomputeEmployeeStatusAsync(
-        int employeeId,
+    public Task RecomputeResourceStatusAsync(
+        int userId,
         int? excludeAllocationId = null,
         CancellationToken cancellationToken = default)
     {
-        return _prmSchedulerService.RecomputeEmployeeAsync(
-            employeeId,
+        return _prmSchedulerService.RecomputeResourceAsync(
+            userId,
             excludeAllocationId,
             cancellationToken);
     }

@@ -12,11 +12,15 @@ public class PrmDbContext : DbContext
 
     public DbSet<Models.Entities.User> Users => Set<Models.Entities.User>();
 
-    public DbSet<Models.Entities.Employee> Employees => Set<Models.Entities.Employee>();
+    public DbSet<Models.Entities.Role> Roles => Set<Models.Entities.Role>();
+
+    public DbSet<Models.Entities.UserRole> UserRoles => Set<Models.Entities.UserRole>();
+
+    public DbSet<Models.Entities.Resource> Resources => Set<Models.Entities.Resource>();
 
     public DbSet<Models.Entities.Skill> Skills => Set<Models.Entities.Skill>();
 
-    public DbSet<Models.Entities.EmployeeSkill> EmployeeSkills => Set<Models.Entities.EmployeeSkill>();
+    public DbSet<Models.Entities.ResourceSkill> ResourceSkills => Set<Models.Entities.ResourceSkill>();
 
     public DbSet<Models.Entities.Project> Projects => Set<Models.Entities.Project>();
 

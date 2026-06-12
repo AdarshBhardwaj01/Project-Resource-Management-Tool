@@ -8,5 +8,5 @@ public class Skill
 
     public string Name { get; set; } = string.Empty;
 
-    public ICollection<EmployeeSkill> EmployeeSkills { get; set; } = new List<EmployeeSkill>();
+    public ICollection<ResourceSkill> ResourceSkills { get; set; } = new List<ResourceSkill>();
 }

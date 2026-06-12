@@ -17,36 +17,28 @@ public class ViewAllUsersScreen
         try
         {
             var response = await _userApiClient.GetAllUsersAsync();
-
             ConsoleHelper.WriteHeader("All Users");
-
             Console.WriteLine($"{"ID",-5}{"Username",-18}{"Role",-12}{"Status"}");
             ConsoleHelper.WriteSeparator();
-
             foreach (var user in response.Users)
             {
                 Console.WriteLine($"{user.Id,-5}{user.Username,-18}{user.Role,-12}{user.Status}");
             }
-
             ConsoleHelper.WriteSeparator();
             Console.WriteLine($"Total: {response.Total}   |   Active: {response.ActiveCount}   |   Inactive: {response.InactiveCount}");
             ConsoleHelper.WriteSeparator();
             Console.WriteLine("[R] Reactivate a user     [B] Back");
             Console.Write("Enter choice: ");
-
             var choice = Console.ReadLine()?.Trim().ToUpperInvariant();
-
             if (choice == "B")
             {
                 return;
             }
-
             if (choice == "R")
             {
                 await ReactivateUserAsync();
                 return;
             }
-
             ConsoleHelper.Pause();
         }
         catch (Exception ex)
@@ -60,14 +52,12 @@ public class ViewAllUsersScreen
     {
         Console.Write("Enter User ID to reactivate: ");
         var input = Console.ReadLine()?.Trim();
-
         if (!int.TryParse(input, out var userId))
         {
             ConsoleHelper.WriteError("Invalid User ID.");
             ConsoleHelper.Pause();
             return;
         }
-
         try
         {
             var user = await _userApiClient.GetUserAsync(userId.ToString());
@@ -80,14 +70,11 @@ public class ViewAllUsersScreen
             Console.WriteLine();
             Console.WriteLine("[Y] Yes     [B] Cancel");
             Console.Write("Enter choice: ");
-
             var confirm = Console.ReadLine()?.Trim().ToUpperInvariant();
-
             if (confirm != "Y")
             {
                 return;
             }
-
             var message = await _userApiClient.ReactivateUserAsync(userId);
             ConsoleHelper.WriteSuccess(message);
             ConsoleHelper.Pause();

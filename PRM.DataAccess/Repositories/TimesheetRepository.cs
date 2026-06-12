@@ -12,48 +12,46 @@ public class TimesheetRepository : GenericRepository<Timesheet>, ITimesheetRepos
     {
     }
 
-    public async Task<IReadOnlyList<Timesheet>> GetByEmployeeIdsForWeekAsync(
-        IEnumerable<int> employeeIds,
+    public async Task<IReadOnlyList<Timesheet>> GetByUserIdsForWeekAsync(
+        IEnumerable<int> userIds,
         DateTime weekStartDate,
         CancellationToken cancellationToken = default)
     {
-        var employeeIdList = employeeIds.Distinct().ToList();
-
-        if (employeeIdList.Count == 0)
+        var userIdList = userIds.Distinct().ToList();
+        if (userIdList.Count == 0)
         {
             return [];
         }
-
         return await DbSet
             .Include(timesheet => timesheet.Entries)
                 .ThenInclude(entry => entry.Project)
             .Where(timesheet =>
-                employeeIdList.Contains(timesheet.EmployeeId) &&
+                userIdList.Contains(timesheet.UserId) &&
                 timesheet.WeekStartDate.Date == weekStartDate.Date)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Timesheet?> GetByEmployeeIdForWeekAsync(
-        int employeeId,
+    public async Task<Timesheet?> GetByUserIdForWeekAsync(
+        int userId,
         DateTime weekStartDate,
         CancellationToken cancellationToken = default)
     {
         return await DbSet
-            .Include(timesheet => timesheet.Employee)
-                .ThenInclude(employee => employee.User)
+            .Include(timesheet => timesheet.Resource)
+                .ThenInclude(resource => resource.User)
             .Include(timesheet => timesheet.Entries)
                 .ThenInclude(entry => entry.Project)
             .AsNoTracking()
             .FirstOrDefaultAsync(
                 timesheet =>
-                    timesheet.EmployeeId == employeeId &&
+                    timesheet.UserId == userId &&
                     timesheet.WeekStartDate.Date == weekStartDate.Date,
                 cancellationToken);
     }
 
-    public async Task<Timesheet?> GetByEmployeeIdForWeekForUpdateAsync(
-        int employeeId,
+    public async Task<Timesheet?> GetByUserIdForWeekForUpdateAsync(
+        int userId,
         DateTime weekStartDate,
         CancellationToken cancellationToken = default)
     {
@@ -61,25 +59,25 @@ public class TimesheetRepository : GenericRepository<Timesheet>, ITimesheetRepos
             .Include(timesheet => timesheet.Entries)
             .FirstOrDefaultAsync(
                 timesheet =>
-                    timesheet.EmployeeId == employeeId &&
+                    timesheet.UserId == userId &&
                     timesheet.WeekStartDate.Date == weekStartDate.Date,
                 cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Timesheet>> GetHistoryByEmployeeIdAsync(
-        int employeeId,
+    public async Task<IReadOnlyList<Timesheet>> GetHistoryByUserIdAsync(
+        int userId,
         CancellationToken cancellationToken = default)
     {
         return await DbSet
-            .Where(timesheet => timesheet.EmployeeId == employeeId)
+            .Where(timesheet => timesheet.UserId == userId)
             .OrderByDescending(timesheet => timesheet.WeekStartDate)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Timesheet?> GetByIdForEmployeeAsync(
+    public async Task<Timesheet?> GetByIdForUserAsync(
         int timesheetId,
-        int employeeId,
+        int userId,
         CancellationToken cancellationToken = default)
     {
         return await DbSet
@@ -87,7 +85,7 @@ public class TimesheetRepository : GenericRepository<Timesheet>, ITimesheetRepos
                 .ThenInclude(entry => entry.Project)
             .AsNoTracking()
             .FirstOrDefaultAsync(
-                timesheet => timesheet.Id == timesheetId && timesheet.EmployeeId == employeeId,
+                timesheet => timesheet.Id == timesheetId && timesheet.UserId == userId,
                 cancellationToken);
     }
 }

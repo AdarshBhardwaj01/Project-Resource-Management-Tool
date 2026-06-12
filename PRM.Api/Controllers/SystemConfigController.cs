@@ -6,7 +6,6 @@ using PRM.Models.DTOs.Auth;
 using PRM.Models.DTOs.SystemConfig;
 
 namespace PRM.Api.Controllers;
-
 [ApiController]
 [Route("api/system-config")]
 [Authorize(Roles = "Admin")]

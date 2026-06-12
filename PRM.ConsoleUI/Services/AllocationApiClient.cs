@@ -16,31 +16,24 @@ public class AllocationApiClient : ApiClientBase
         string? status = null)
     {
         ApplyAuthorizationHeader();
-
         var query = new List<string>();
-
         if (employeeId.HasValue)
         {
             query.Add($"employeeId={employeeId.Value}");
         }
-
         if (projectId.HasValue)
         {
             query.Add($"projectId={projectId.Value}");
         }
-
         if (!string.IsNullOrWhiteSpace(status))
         {
             query.Add($"status={Uri.EscapeDataString(status)}");
         }
-
         var url = query.Count == 0
             ? "api/allocations"
             : $"api/allocations?{string.Join("&", query)}";
-
         var response = await HttpClient.GetAsync(url);
         await EnsureSuccessAsync(response, "Failed to load allocations.");
-
         return await ReadJsonAsync<AllocationListResponse>(response)
             ?? new AllocationListResponse();
     }

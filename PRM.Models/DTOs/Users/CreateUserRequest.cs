@@ -10,5 +10,9 @@ public class CreateUserRequest
 
     public string TemporaryPassword { get; set; } = string.Empty;
 
+    public string Department { get; set; } = string.Empty;
+
+    public string Designation { get; set; } = string.Empty;
+
     public int Role { get; set; }
 }

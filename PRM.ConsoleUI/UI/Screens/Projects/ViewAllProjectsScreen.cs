@@ -28,10 +28,8 @@ public class ViewAllProjectsScreen
         {
             var response = await _projectApiClient.GetAllProjectsAsync();
             DisplayProjectList(response);
-
             ConsoleHelper.WriteActions(("B", "Back"));
             var choice = ConsoleHelper.ReadActionChoice();
-
             if (choice != "B" && !string.IsNullOrWhiteSpace(choice))
             {
                 ConsoleHelper.WriteError("Invalid option.");
@@ -48,7 +46,6 @@ public class ViewAllProjectsScreen
     private static void DisplayProjectList(ProjectListResponse response)
     {
         ConsoleHelper.WriteHeader("All Projects");
-
         var rows = response.Projects.Select(project => new (string Value, int Width)[]
         {
             (project.Id.ToString(), Columns[0].Width),
@@ -57,7 +54,6 @@ public class ViewAllProjectsScreen
             (project.EndDate, Columns[3].Width),
             (project.Status, Columns[4].Width)
         });
-
         ConsoleHelper.WritePipeTable(Columns, rows);
     }
 }

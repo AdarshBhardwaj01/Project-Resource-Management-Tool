@@ -2,12 +2,11 @@ namespace PRM.Business.Interfaces.Services;
 
 public interface IEmployeeStatusSchedulerService
 {
-    Task RecomputeEmployeeStatusAsync(
-        int employeeId,
+    Task RecomputeResourceStatusAsync(
+        int userId,
         int? excludeAllocationId = null,
         CancellationToken cancellationToken = default);
-
-    Task RecomputeEmployeeStatusByUserIdAsync(
+    Task RecomputeResourceStatusByUserIdAsync(
         int userId,
         CancellationToken cancellationToken = default);
 }

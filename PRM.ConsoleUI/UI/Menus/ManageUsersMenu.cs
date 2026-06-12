@@ -31,7 +31,6 @@ public class ManageUsersMenu
         while (true)
         {
             ConsoleHelper.WriteHeader("Manage Users");
-
             Console.WriteLine("1. Create User Account");
             Console.WriteLine("2. View All Users");
             Console.WriteLine("3. Reset User Password");
@@ -39,9 +38,7 @@ public class ManageUsersMenu
             Console.WriteLine("5. Back");
             Console.WriteLine();
             Console.Write("Enter option: ");
-
             var choice = Console.ReadLine()?.Trim();
-
             switch (choice)
             {
                 case "1":

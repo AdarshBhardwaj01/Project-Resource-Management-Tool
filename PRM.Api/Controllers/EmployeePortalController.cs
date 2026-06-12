@@ -8,7 +8,6 @@ using PRM.Models.DTOs.Auth;
 using PRM.Models.DTOs.EmployeePortal;
 
 namespace PRM.Api.Controllers;
-
 [ApiController]
 [Route("api/employee")]
 [Authorize(Roles = "Employee")]
@@ -30,7 +29,6 @@ public class EmployeePortalController : ControllerBase
             var allocations = await _employeePortalService.GetMyAllocationsAsync(
                 GetCurrentUserId(),
                 cancellationToken);
-
             return Ok(allocations);
         }
         catch (BusinessValidationException ex)
@@ -47,17 +45,14 @@ public class EmployeePortalController : ControllerBase
         try
         {
             DateTime? weekStartDate = null;
-
             if (!string.IsNullOrWhiteSpace(weekStart))
             {
                 weekStartDate = DateValidator.ParseRequired(weekStart, "Week start date");
             }
-
             var preview = await _employeePortalService.GetTimesheetSubmitPreviewAsync(
                 GetCurrentUserId(),
                 weekStartDate,
                 cancellationToken);
-
             return Ok(preview);
         }
         catch (BusinessValidationException ex)
@@ -77,7 +72,6 @@ public class EmployeePortalController : ControllerBase
                 GetCurrentUserId(),
                 request,
                 cancellationToken);
-
             return Ok(new ApiMessageResponse { Message = message });
         }
         catch (BusinessValidationException ex)
@@ -95,7 +89,6 @@ public class EmployeePortalController : ControllerBase
             var timesheets = await _employeePortalService.GetMyTimesheetsAsync(
                 GetCurrentUserId(),
                 cancellationToken);
-
             return Ok(timesheets);
         }
         catch (BusinessValidationException ex)
@@ -115,7 +108,6 @@ public class EmployeePortalController : ControllerBase
                 GetCurrentUserId(),
                 timesheetId,
                 cancellationToken);
-
             return Ok(detail);
         }
         catch (BusinessValidationException ex)
@@ -127,12 +119,10 @@ public class EmployeePortalController : ControllerBase
     private int GetCurrentUserId()
     {
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
         if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
         {
             throw new BusinessValidationException("Invalid user session.");
         }
-
         return userId;
     }
 }

@@ -1,5 +1,3 @@
-using PRM.Models.Enums;
-
 namespace PRM.Models.Entities;
 
 public class User
@@ -14,7 +12,9 @@ public class User
 
     public string PasswordHash { get; set; } = string.Empty;
 
-    public UserRole Role { get; set; }
+    public string Department { get; set; } = string.Empty;
+
+    public string Designation { get; set; } = string.Empty;
 
     public bool IsActive { get; set; } = true;
 
@@ -22,7 +22,9 @@ public class User
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public Employee? Employee { get; set; }
+    public Resource? Resource { get; set; }
+
+    public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 
     public ICollection<Project> ManagedProjects { get; set; } = new List<Project>();
 }

@@ -4,27 +4,23 @@ namespace PRM.Business.Interfaces.Repositories;
 
 public interface ITimesheetRepository : IRepository<Timesheet>
 {
-    Task<IReadOnlyList<Timesheet>> GetByEmployeeIdsForWeekAsync(
-        IEnumerable<int> employeeIds,
+    Task<IReadOnlyList<Timesheet>> GetByUserIdsForWeekAsync(
+        IEnumerable<int> userIds,
         DateTime weekStartDate,
         CancellationToken cancellationToken = default);
-
-    Task<Timesheet?> GetByEmployeeIdForWeekAsync(
-        int employeeId,
+    Task<Timesheet?> GetByUserIdForWeekAsync(
+        int userId,
         DateTime weekStartDate,
         CancellationToken cancellationToken = default);
-
-    Task<Timesheet?> GetByEmployeeIdForWeekForUpdateAsync(
-        int employeeId,
+    Task<Timesheet?> GetByUserIdForWeekForUpdateAsync(
+        int userId,
         DateTime weekStartDate,
         CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<Timesheet>> GetHistoryByEmployeeIdAsync(
-        int employeeId,
+    Task<IReadOnlyList<Timesheet>> GetHistoryByUserIdAsync(
+        int userId,
         CancellationToken cancellationToken = default);
-
-    Task<Timesheet?> GetByIdForEmployeeAsync(
+    Task<Timesheet?> GetByIdForUserAsync(
         int timesheetId,
-        int employeeId,
+        int userId,
         CancellationToken cancellationToken = default);
 }

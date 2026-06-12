@@ -3,30 +3,29 @@ using Microsoft.AspNetCore.Mvc;
 using PRM.Business.Interfaces.Services;
 using PRM.Common.Exceptions;
 using PRM.Models.DTOs.Auth;
-using PRM.Models.DTOs.Employees;
+using PRM.Models.DTOs.Resources;
 
 namespace PRM.Api.Controllers;
-
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Roles = "Admin")]
 public class EmployeesController : ControllerBase
 {
-    private readonly IEmployeeService _employeeService;
+    private readonly IResourceService _resourceService;
 
-    public EmployeesController(IEmployeeService employeeService)
+    public EmployeesController(IResourceService resourceService)
     {
-        _employeeService = employeeService;
+        _resourceService = resourceService;
     }
 
     [HttpPost]
     public async Task<ActionResult<ApiMessageResponse>> CreateEmployee(
-        [FromBody] CreateEmployeeRequest request,
+        [FromBody] CreateResourceRequest request,
         CancellationToken cancellationToken)
     {
         try
         {
-            var message = await _employeeService.CreateEmployeeAsync(request, cancellationToken);
+            var message = await _resourceService.CreateResourceAsync(request, cancellationToken);
             return Ok(new ApiMessageResponse { Message = message });
         }
         catch (BusinessValidationException ex)
@@ -36,14 +35,14 @@ public class EmployeesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<EmployeeListResponse>> GetAllEmployees(
+    public async Task<ActionResult<ResourceListResponse>> GetAllEmployees(
         [FromQuery] string? status,
         [FromQuery] string? department,
         CancellationToken cancellationToken)
     {
         try
         {
-            var response = await _employeeService.GetAllEmployeesAsync(status, department, cancellationToken);
+            var response = await _resourceService.GetAllResourcesAsync(status, department, cancellationToken);
             return Ok(response);
         }
         catch (BusinessValidationException ex)
@@ -53,12 +52,12 @@ public class EmployeesController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<EmployeeDetailDto>> GetEmployee(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<ResourceDetailDto>> GetEmployee(int id, CancellationToken cancellationToken)
     {
         try
         {
-            var employee = await _employeeService.GetEmployeeAsync(id, cancellationToken);
-            return Ok(employee);
+            var resource = await _resourceService.GetResourceAsync(id, cancellationToken);
+            return Ok(resource);
         }
         catch (BusinessValidationException ex)
         {
@@ -69,12 +68,12 @@ public class EmployeesController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<ApiMessageResponse>> UpdateEmployee(
         int id,
-        [FromBody] UpdateEmployeeRequest request,
+        [FromBody] UpdateResourceRequest request,
         CancellationToken cancellationToken)
     {
         try
         {
-            var message = await _employeeService.UpdateEmployeeAsync(id, request, cancellationToken);
+            var message = await _resourceService.UpdateResourceAsync(id, request, cancellationToken);
             return Ok(new ApiMessageResponse { Message = message });
         }
         catch (BusinessValidationException ex)
@@ -88,7 +87,7 @@ public class EmployeesController : ControllerBase
     {
         try
         {
-            var message = await _employeeService.DeactivateEmployeeAsync(id, cancellationToken);
+            var message = await _resourceService.DeactivateResourceAsync(id, cancellationToken);
             return Ok(new ApiMessageResponse { Message = message });
         }
         catch (BusinessValidationException ex)
@@ -98,13 +97,13 @@ public class EmployeesController : ControllerBase
     }
 
     [HttpGet("{id:int}/skills")]
-    public async Task<ActionResult<IReadOnlyList<EmployeeSkillDto>>> GetEmployeeSkills(
+    public async Task<ActionResult<IReadOnlyList<ResourceSkillDto>>> GetEmployeeSkills(
         int id,
         CancellationToken cancellationToken)
     {
         try
         {
-            var skills = await _employeeService.GetEmployeeSkillsAsync(id, cancellationToken);
+            var skills = await _resourceService.GetResourceSkillsAsync(id, cancellationToken);
             return Ok(skills);
         }
         catch (BusinessValidationException ex)
@@ -116,12 +115,12 @@ public class EmployeesController : ControllerBase
     [HttpPost("{id:int}/skills")]
     public async Task<ActionResult<ApiMessageResponse>> AddEmployeeSkill(
         int id,
-        [FromBody] AddEmployeeSkillRequest request,
+        [FromBody] AddResourceSkillRequest request,
         CancellationToken cancellationToken)
     {
         try
         {
-            var message = await _employeeService.AddEmployeeSkillAsync(id, request, cancellationToken);
+            var message = await _resourceService.AddResourceSkillAsync(id, request, cancellationToken);
             return Ok(new ApiMessageResponse { Message = message });
         }
         catch (BusinessValidationException ex)
@@ -134,12 +133,12 @@ public class EmployeesController : ControllerBase
     public async Task<ActionResult<ApiMessageResponse>> UpdateEmployeeSkill(
         int id,
         int skillId,
-        [FromBody] UpdateEmployeeSkillRequest request,
+        [FromBody] UpdateResourceSkillRequest request,
         CancellationToken cancellationToken)
     {
         try
         {
-            var message = await _employeeService.UpdateEmployeeSkillAsync(id, skillId, request, cancellationToken);
+            var message = await _resourceService.UpdateResourceSkillAsync(id, skillId, request, cancellationToken);
             return Ok(new ApiMessageResponse { Message = message });
         }
         catch (BusinessValidationException ex)
@@ -156,7 +155,7 @@ public class EmployeesController : ControllerBase
     {
         try
         {
-            var message = await _employeeService.RemoveEmployeeSkillAsync(id, skillId, cancellationToken);
+            var message = await _resourceService.RemoveResourceSkillAsync(id, skillId, cancellationToken);
             return Ok(new ApiMessageResponse { Message = message });
         }
         catch (BusinessValidationException ex)
@@ -172,7 +171,7 @@ public class EmployeesController : ControllerBase
     {
         try
         {
-            var message = await _employeeService.AssignManagerAsync(request, cancellationToken);
+            var message = await _resourceService.AssignManagerAsync(request, cancellationToken);
             return Ok(new ApiMessageResponse { Message = message });
         }
         catch (BusinessValidationException ex)

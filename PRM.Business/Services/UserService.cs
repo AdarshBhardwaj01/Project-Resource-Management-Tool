@@ -6,24 +6,28 @@ using PRM.Common.Helpers;
 using PRM.Models.DTOs.Users;
 using PRM.Models.Entities;
 using PRM.Models.Enums;
+using PRM.Common.Constants;
 
 namespace PRM.Business.Services;
 
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
-    private readonly IEmployeeRepository _employeeRepository;
+    private readonly IRoleRepository _roleRepository;
+    private readonly IResourceRepository _resourceRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IMapper _mapper;
 
     public UserService(
         IUserRepository userRepository,
-        IEmployeeRepository employeeRepository,
+        IRoleRepository roleRepository,
+        IResourceRepository resourceRepository,
         IPasswordHasher passwordHasher,
         IMapper mapper)
     {
         _userRepository = userRepository;
-        _employeeRepository = employeeRepository;
+        _roleRepository = roleRepository;
+        _resourceRepository = resourceRepository;
         _passwordHasher = passwordHasher;
         _mapper = mapper;
     }
@@ -31,25 +35,35 @@ public class UserService : IUserService
     public async Task<string> CreateUserAsync(CreateUserRequest request, CancellationToken cancellationToken = default)
     {
         ValidateCreateUserRequest(request);
-
         if (await _userRepository.ExistsByUsernameAsync(request.Username, cancellationToken))
         {
             throw new BusinessValidationException("Username already exists.");
         }
-
         if (await _userRepository.ExistsByEmailAsync(request.Email, cancellationToken))
         {
             throw new BusinessValidationException("Email already exists.");
         }
-
+        var role = await _roleRepository.GetByNameAsync(((ApplicationRole)request.Role).ToString(), cancellationToken)
+            ?? throw new BusinessValidationException("Invalid role selected.");
         var user = _mapper.Map<User>(request);
         user.PasswordHash = _passwordHasher.Hash(request.TemporaryPassword);
         user.ForcePasswordChange = true;
         user.CreatedAt = DateTime.UtcNow;
-
         await _userRepository.AddAsync(user, cancellationToken);
         await _userRepository.SaveChangesAsync(cancellationToken);
-
+        await _userRepository.AssignRoleAsync(user.Id, role.Id, cancellationToken);
+        await _userRepository.SaveChangesAsync(cancellationToken);
+        var appRole = (ApplicationRole)request.Role;
+        if (appRole == ApplicationRole.Employee || appRole == ApplicationRole.Manager)
+        {
+            await _resourceRepository.AddAsync(new Resource
+            {
+                UserId = user.Id,
+                Status = ResourceStatus.Bench,
+                UtilisationPercent = 0
+            }, cancellationToken);
+            await _resourceRepository.SaveChangesAsync(cancellationToken);
+        }
         return "Account created. User must change password on first login.";
     }
 
@@ -57,7 +71,6 @@ public class UserService : IUserService
     {
         var users = await _userRepository.GetAllAsync(cancellationToken);
         var userDtos = _mapper.Map<List<UserListItemDto>>(users);
-
         return new UserListResponse
         {
             Users = userDtos,
@@ -79,21 +92,15 @@ public class UserService : IUserService
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-
         if (string.IsNullOrWhiteSpace(request.NewTemporaryPassword))
         {
             throw new BusinessValidationException("New temporary password is required.");
         }
-
         PasswordValidator.Validate(request.NewTemporaryPassword);
-
         var user = await FindUserOrThrowAsync(usernameOrId, cancellationToken);
-
         user.PasswordHash = _passwordHasher.Hash(request.NewTemporaryPassword);
         user.ForcePasswordChange = true;
-
         await _userRepository.SaveChangesAsync(cancellationToken);
-
         return "Password reset. User will be prompted to change it on next login.";
     }
 
@@ -103,65 +110,52 @@ public class UserService : IUserService
         CancellationToken cancellationToken = default)
     {
         var user = await FindUserOrThrowAsync(usernameOrId, cancellationToken);
-
         if (user.Id == currentUserId)
         {
             throw new BusinessValidationException("You cannot deactivate your own account.");
         }
-
         if (!user.IsActive)
         {
             throw new BusinessValidationException("User is already inactive.");
         }
-
         user.IsActive = false;
-        await _employeeRepository.DeactivateByUserIdAsync(user.Id, cancellationToken);
+        await _resourceRepository.DeactivateByUserIdAsync(user.Id, cancellationToken);
         await _userRepository.SaveChangesAsync(cancellationToken);
-
         return "User deactivated.";
     }
 
     public async Task<string> ReactivateUserAsync(int userId, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
-
         if (user is null)
         {
             throw new BusinessValidationException("User not found.");
         }
-
         if (user.IsActive)
         {
             throw new BusinessValidationException("User is already active.");
         }
-
         user.IsActive = true;
-
-        var employeeRestored = await _employeeRepository.ReactivateByUserIdAsync(userId, cancellationToken);
-
+        var resourceRestored = await _resourceRepository.ReactivateByUserIdAsync(userId, cancellationToken);
         await _userRepository.SaveChangesAsync(cancellationToken);
-
-        return employeeRestored
-            ? $"Account reactivated. {user.FullName} can now log in. Employee profile restored on BENCH."
+        return resourceRestored
+            ? $"Account reactivated. {user.FullName} can now log in. Resource profile restored on BENCH."
             : $"Account reactivated. {user.FullName} can now log in.";
     }
 
     private async Task<User> FindUserOrThrowAsync(string usernameOrId, CancellationToken cancellationToken)
     {
         var user = await _userRepository.FindByUsernameOrIdAsync(usernameOrId, cancellationToken);
-
         if (user is null)
         {
             throw new BusinessValidationException("User not found.");
         }
-
         return user;
     }
 
     private static void ValidateCreateUserRequest(CreateUserRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-
         if (string.IsNullOrWhiteSpace(request.FullName)
             || string.IsNullOrWhiteSpace(request.Email)
             || string.IsNullOrWhiteSpace(request.Username)
@@ -169,12 +163,10 @@ public class UserService : IUserService
         {
             throw new BusinessValidationException("All fields are mandatory.");
         }
-
-        if (!Enum.IsDefined(typeof(UserRole), request.Role))
+        if (!Enum.IsDefined(typeof(ApplicationRole), request.Role))
         {
             throw new BusinessValidationException("Invalid role selected.");
         }
-
         EmailValidator.Validate(request.Email);
         PasswordValidator.Validate(request.TemporaryPassword);
     }

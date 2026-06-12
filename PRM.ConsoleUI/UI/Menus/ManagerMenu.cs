@@ -37,9 +37,7 @@ public class ManagerMenu
         while (true)
         {
             var now = DateTime.Now.ToString("dd-MMM-yyyy  HH:mm");
-
             ConsoleHelper.WriteHeader($"Welcome, {_session.FullName}!  |  {now}");
-
             Console.WriteLine("1. Resource Dashboard");
             Console.WriteLine("2. Allocate Resource");
             Console.WriteLine("3. My Projects");
@@ -48,9 +46,7 @@ public class ManagerMenu
             Console.WriteLine("6. Logout");
             Console.WriteLine();
             Console.Write("Enter option: ");
-
             var choice = Console.ReadLine()?.Trim();
-
             switch (choice)
             {
                 case "1":

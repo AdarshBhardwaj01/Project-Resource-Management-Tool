@@ -4,7 +4,7 @@ public class Allocation
 {
     public int Id { get; set; }
 
-    public int EmployeeId { get; set; }
+    public int UserId { get; set; }
 
     public int ProjectId { get; set; }
 
@@ -14,7 +14,7 @@ public class Allocation
 
     public DateTime ToDate { get; set; }
 
-    public Employee Employee { get; set; } = null!;
+    public Resource Resource { get; set; } = null!;
 
     public Project Project { get; set; } = null!;
 }

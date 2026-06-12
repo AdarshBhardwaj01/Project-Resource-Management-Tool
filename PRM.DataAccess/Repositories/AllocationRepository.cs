@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using PRM.Common.Constants;
 using PRM.Common.Helpers;
 using PRM.Business.Interfaces.Repositories;
 using PRM.DataAccess.Context;
 using PRM.Models.Entities;
-using PRM.Models.Enums;
 
 namespace PRM.DataAccess.Repositories;
 
@@ -15,35 +15,35 @@ public class AllocationRepository : GenericRepository<Allocation>, IAllocationRe
     }
 
     public async Task<IReadOnlyList<Allocation>> GetAllAsync(
-        int? employeeId,
+        int? userId,
         int? projectId,
         string? status,
         CancellationToken cancellationToken = default)
     {
         var today = DateTime.UtcNow.Date;
         var query = DbSet
-            .Include(allocation => allocation.Employee)
-                .ThenInclude(employee => employee.User)
+            .Include(allocation => allocation.Resource)
+                .ThenInclude(resource => resource.User)
+                    .ThenInclude(user => user.UserRoles)
+                        .ThenInclude(userRole => userRole.Role)
             .Include(allocation => allocation.Project)
             .Where(allocation =>
-                allocation.Employee.IsActive &&
-                allocation.Employee.User.Role == UserRole.Employee)
+                allocation.Resource.User.IsActive &&
+                allocation.Resource.User.UserRoles.Any(userRole =>
+                    userRole.Role.RoleName == RoleNames.Employee ||
+                    userRole.Role.RoleName == RoleNames.Manager))
             .AsQueryable();
-
-        if (employeeId.HasValue)
+        if (userId.HasValue)
         {
-            query = query.Where(allocation => allocation.EmployeeId == employeeId.Value);
+            query = query.Where(allocation => allocation.UserId == userId.Value);
         }
-
         if (projectId.HasValue)
         {
             query = query.Where(allocation => allocation.ProjectId == projectId.Value);
         }
-
         if (!string.IsNullOrWhiteSpace(status))
         {
             var normalizedStatus = status.Trim().ToUpperInvariant();
-
             query = normalizedStatus switch
             {
                 "ACTIVE" => query.Where(allocation => allocation.ToDate.Date > today),
@@ -51,30 +51,28 @@ public class AllocationRepository : GenericRepository<Allocation>, IAllocationRe
                 _ => query
             };
         }
-
         return await query
-            .OrderBy(allocation => allocation.Employee.FullName)
+            .OrderBy(allocation => allocation.Resource.User.FullName)
             .ThenBy(allocation => allocation.Project.Name)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
 
     public async Task<int> GetActiveUtilisationTotalAsync(
-        int employeeId,
+        int userId,
         CancellationToken cancellationToken = default)
     {
         var today = DateTime.UtcNow.Date;
-
         return await DbSet
             .Where(allocation =>
-                allocation.EmployeeId == employeeId &&
+                allocation.UserId == userId &&
                 allocation.FromDate.Date <= today &&
                 allocation.ToDate.Date > today)
             .SumAsync(allocation => allocation.UtilisationPercent, cancellationToken);
     }
 
     public async Task<int> GetOverlappingUtilisationTotalAsync(
-        int employeeId,
+        int userId,
         DateTime fromDate,
         DateTime toDate,
         int? excludeAllocationId = null,
@@ -84,9 +82,7 @@ public class AllocationRepository : GenericRepository<Allocation>, IAllocationRe
         var periodStart = fromDate.Date;
         var periodEnd = toDate.Date;
         var today = DateTime.UtcNow.Date;
-
-        var query = DbSet.Where(allocation => allocation.EmployeeId == employeeId);
-
+        var query = DbSet.Where(allocation => allocation.UserId == userId);
         if (periodStart > today)
         {
             query = query.Where(allocation =>
@@ -103,22 +99,19 @@ public class AllocationRepository : GenericRepository<Allocation>, IAllocationRe
                 allocation.FromDate.Date <= periodStart &&
                 allocation.ToDate.Date > periodStart);
         }
-
         if (excludeAllocationId.HasValue)
         {
             query = query.Where(allocation => allocation.Id != excludeAllocationId.Value);
         }
-
         if (excludeProjectId.HasValue)
         {
             query = query.Where(allocation => allocation.ProjectId != excludeProjectId.Value);
         }
-
         return await query.SumAsync(allocation => allocation.UtilisationPercent, cancellationToken);
     }
 
     public async Task<Allocation?> GetOverlappingAllocationOnProjectAsync(
-        int employeeId,
+        int userId,
         int projectId,
         DateTime fromDate,
         DateTime toDate,
@@ -127,12 +120,11 @@ public class AllocationRepository : GenericRepository<Allocation>, IAllocationRe
         var periodStart = fromDate.Date;
         var periodEnd = toDate.Date;
         var today = DateTime.UtcNow.Date;
-
         return await DbSet
             .Include(allocation => allocation.Project)
             .FirstOrDefaultAsync(
                 allocation =>
-                    allocation.EmployeeId == employeeId &&
+                    allocation.UserId == userId &&
                     allocation.ProjectId == projectId &&
                     allocation.FromDate.Date <= periodEnd &&
                     allocation.ToDate.Date >= periodStart &&
@@ -141,21 +133,18 @@ public class AllocationRepository : GenericRepository<Allocation>, IAllocationRe
     }
 
     public async Task<bool> HasActiveAllocationsAsync(
-        int employeeId,
+        int userId,
         int? excludeAllocationId = null,
         CancellationToken cancellationToken = default)
     {
         var today = DateTime.UtcNow.Date;
-
         var query = DbSet.Where(allocation =>
-            allocation.EmployeeId == employeeId &&
+            allocation.UserId == userId &&
             allocation.ToDate.Date > today);
-
         if (excludeAllocationId.HasValue)
         {
             query = query.Where(allocation => allocation.Id != excludeAllocationId.Value);
         }
-
         return await query.AnyAsync(cancellationToken);
     }
 
@@ -164,17 +153,20 @@ public class AllocationRepository : GenericRepository<Allocation>, IAllocationRe
         CancellationToken cancellationToken = default)
     {
         var today = DateTime.UtcNow.Date;
-
         return await DbSet
-            .Include(allocation => allocation.Employee)
-                .ThenInclude(employee => employee.User)
+            .Include(allocation => allocation.Resource)
+                .ThenInclude(resource => resource.User)
+                    .ThenInclude(user => user.UserRoles)
+                        .ThenInclude(userRole => userRole.Role)
             .Include(allocation => allocation.Project)
             .Where(allocation =>
                 allocation.ProjectId == projectId &&
                 allocation.ToDate.Date > today &&
-                allocation.Employee.IsActive &&
-                allocation.Employee.User.Role == UserRole.Employee)
-            .OrderBy(allocation => allocation.Employee.FullName)
+                allocation.Resource.User.IsActive &&
+                allocation.Resource.User.UserRoles.Any(userRole =>
+                    userRole.Role.RoleName == RoleNames.Employee ||
+                    userRole.Role.RoleName == RoleNames.Manager))
+            .OrderBy(allocation => allocation.Resource.User.FullName)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
@@ -184,10 +176,12 @@ public class AllocationRepository : GenericRepository<Allocation>, IAllocationRe
         CancellationToken cancellationToken = default)
     {
         return await DbSet
-            .Include(allocation => allocation.Employee)
-                .ThenInclude(employee => employee.User)
-            .Include(allocation => allocation.Employee)
-                .ThenInclude(employee => employee.Allocations)
+            .Include(allocation => allocation.Resource)
+                .ThenInclude(resource => resource.User)
+                    .ThenInclude(user => user.UserRoles)
+                        .ThenInclude(userRole => userRole.Role)
+            .Include(allocation => allocation.Resource)
+                .ThenInclude(resource => resource.Allocations)
             .Include(allocation => allocation.Project)
             .FirstOrDefaultAsync(allocation => allocation.Id == allocationId, cancellationToken);
     }
@@ -199,23 +193,27 @@ public class AllocationRepository : GenericRepository<Allocation>, IAllocationRe
         CancellationToken cancellationToken = default)
     {
         return await DbSet
-            .Include(allocation => allocation.Employee)
-                .ThenInclude(employee => employee.User)
+            .Include(allocation => allocation.Resource)
+                .ThenInclude(resource => resource.User)
+                    .ThenInclude(user => user.UserRoles)
+                        .ThenInclude(userRole => userRole.Role)
             .Include(allocation => allocation.Project)
             .Where(allocation =>
                 allocation.Project.ManagerId == managerUserId &&
                 allocation.FromDate.Date <= periodEnd.Date &&
                 allocation.ToDate.Date >= periodStart.Date &&
-                allocation.Employee.IsActive &&
-                allocation.Employee.User.Role == UserRole.Employee)
-            .OrderBy(allocation => allocation.Employee.FullName)
+                allocation.Resource.User.IsActive &&
+                allocation.Resource.User.UserRoles.Any(userRole =>
+                    userRole.Role.RoleName == RoleNames.Employee ||
+                    userRole.Role.RoleName == RoleNames.Manager))
+            .OrderBy(allocation => allocation.Resource.User.FullName)
             .ThenBy(allocation => allocation.Project.Name)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Allocation>> GetByEmployeeIdForPeriodAsync(
-        int employeeId,
+    public async Task<IReadOnlyList<Allocation>> GetByUserIdForPeriodAsync(
+        int userId,
         DateTime periodStart,
         DateTime periodEnd,
         CancellationToken cancellationToken = default)
@@ -223,7 +221,7 @@ public class AllocationRepository : GenericRepository<Allocation>, IAllocationRe
         return await DbSet
             .Include(allocation => allocation.Project)
             .Where(allocation =>
-                allocation.EmployeeId == employeeId &&
+                allocation.UserId == userId &&
                 allocation.FromDate.Date <= periodEnd.Date &&
                 allocation.ToDate.Date >= periodStart.Date)
             .OrderBy(allocation => allocation.Project.Name)
@@ -231,16 +229,15 @@ public class AllocationRepository : GenericRepository<Allocation>, IAllocationRe
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Allocation>> GetScheduledByEmployeeIdAsync(
-        int employeeId,
+    public async Task<IReadOnlyList<Allocation>> GetScheduledByUserIdAsync(
+        int userId,
         CancellationToken cancellationToken = default)
     {
         var today = DateTime.UtcNow.Date;
-
         return await DbSet
             .Include(allocation => allocation.Project)
             .Where(allocation =>
-                allocation.EmployeeId == employeeId &&
+                allocation.UserId == userId &&
                 allocation.ToDate.Date > today)
             .OrderBy(allocation => allocation.Project.Name)
             .AsNoTracking()

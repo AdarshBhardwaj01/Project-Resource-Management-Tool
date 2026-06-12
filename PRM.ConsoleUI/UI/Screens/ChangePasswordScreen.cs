@@ -18,22 +18,17 @@ public class ChangePasswordScreen
         ConsoleHelper.WriteHeader(
             "Change Password",
             "You must set a new password to continue.");
-
         var newPassword = ConsoleHelper.ReadPassword("New Password");
         var confirmPassword = ConsoleHelper.ReadPassword("Confirm Password");
-
         ConsoleHelper.WriteSeparator();
         Console.WriteLine("[S] Save and Continue");
         Console.Write("Enter choice: ");
-
         var action = Console.ReadLine()?.Trim().ToUpperInvariant();
-
         if (action != "S")
         {
             await ShowAsync();
             return;
         }
-
         try
         {
             var message = await _authApiClient.ChangePasswordAsync(new ChangePasswordRequest
@@ -41,7 +36,6 @@ public class ChangePasswordScreen
                 NewPassword = newPassword,
                 ConfirmPassword = confirmPassword
             });
-
             ConsoleHelper.WriteSuccess(message);
             ConsoleHelper.Pause();
         }

@@ -10,7 +10,6 @@ public static class ConsoleHelper
         {
             return;
         }
-
         try
         {
             Console.SetCursorPosition(0, 0);
@@ -19,7 +18,6 @@ public static class ConsoleHelper
         {
             // Cursor reset may fail before the buffer is cleared.
         }
-
         try
         {
             Console.Clear();
@@ -29,7 +27,6 @@ public static class ConsoleHelper
             // Erase display + scrollback (3J) then home cursor — works in Windows Terminal and VS Code.
             Console.Write("\x1b[2J\x1b[3J\x1b[H");
         }
-
         try
         {
             Console.SetCursorPosition(0, 0);
@@ -39,7 +36,6 @@ public static class ConsoleHelper
             // Some terminals reject cursor reset after clear.
         }
     }
-
     /// <summary>
     /// Call when leaving a full-screen flow so the parent menu redraws on a clean console.
     /// </summary>
@@ -53,12 +49,10 @@ public static class ConsoleHelper
         ClearScreen();
         WriteBoxTop();
         WriteBoxText(title.ToUpperInvariant());
-
         if (!string.IsNullOrWhiteSpace(subtitle))
         {
             WriteBoxText(subtitle);
         }
-
         WriteBoxBottom();
         Console.WriteLine();
     }
@@ -76,7 +70,6 @@ public static class ConsoleHelper
         var prompt = string.IsNullOrWhiteSpace(hint)
             ? $"{label,-FormLabelWidth}: "
             : $"{label,-FormLabelWidth}: ({hint}) ";
-
         Console.Write(prompt);
         return Console.ReadLine()?.Trim() ?? string.Empty;
     }
@@ -115,10 +108,8 @@ public static class ConsoleHelper
         var rowList = rows.ToList();
         var headerLine = FormatPipeRow(headers.Select(column => (column.Title, column.Width)).ToArray());
         Console.WriteLine(headerLine);
-
         var tableWidth = headerLine.Length;
         WriteLineOf('-', tableWidth);
-
         if (rowList.Count == 0)
         {
             Console.WriteLine("(none)");
@@ -130,7 +121,6 @@ public static class ConsoleHelper
                 Console.WriteLine(FormatPipeRow(row));
             }
         }
-
         WriteLineOf('-', tableWidth);
         return tableWidth;
     }
@@ -143,7 +133,6 @@ public static class ConsoleHelper
     public static void WriteProjectLabel(string projectName, int lineWidth)
     {
         var label = $"--- {projectName} ---";
-
         if (label.Length >= lineWidth)
         {
             Console.WriteLine(label);
@@ -152,7 +141,6 @@ public static class ConsoleHelper
         {
             Console.WriteLine(label + new string('-', lineWidth - label.Length));
         }
-
         Console.WriteLine();
     }
 
@@ -164,10 +152,8 @@ public static class ConsoleHelper
             {
                 Console.Write("     ");
             }
-
             WriteShortcut(actions[index].Key, actions[index].Label);
         }
-
         Console.WriteLine();
     }
 
@@ -201,11 +187,9 @@ public static class ConsoleHelper
         Console.Write($"{label} : ");
         var password = string.Empty;
         ConsoleKeyInfo key;
-
         do
         {
             key = Console.ReadKey(intercept: true);
-
             if (key.Key == ConsoleKey.Backspace && password.Length > 0)
             {
                 password = password[..^1];
@@ -218,7 +202,6 @@ public static class ConsoleHelper
             }
         }
         while (key.Key != ConsoleKey.Enter);
-
         Console.WriteLine();
         return password;
     }
@@ -250,7 +233,6 @@ public static class ConsoleHelper
             "ATTENTION" => "🟡",
             _ => "🟢"
         };
-
         return $"{icon} {statusLabel}";
     }
 
@@ -258,11 +240,9 @@ public static class ConsoleHelper
     {
         var text = FormatHealthStatusDisplay(statusLabel);
         Console.Write(text);
-
         if (padWidth.HasValue)
         {
             var padding = padWidth.Value - GetVisualLength(text);
-
             if (padding > 0)
             {
                 Console.Write(new string(' ', padding));
@@ -299,11 +279,9 @@ public static class ConsoleHelper
             ("Project", 16),
             ("Health", 16)
         };
-
         WritePipeTableHeader(columns);
         var tableWidth = GetPipeTableWidth(columns);
         WriteLineOf('-', tableWidth);
-
         foreach (var project in projects)
         {
             Console.Write(FormatPipeTableCells(
@@ -313,7 +291,6 @@ public static class ConsoleHelper
             WriteHealthStatus(project.HealthStatus, columns[2].Width);
             Console.WriteLine();
         }
-
         WriteLineOf('-', tableWidth);
     }
 
@@ -354,14 +331,12 @@ public static class ConsoleHelper
     private static string FormatPipeRow((string Value, int Width)[] columns)
     {
         var parts = new List<string>(columns.Length);
-
         for (var index = 0; index < columns.Length; index++)
         {
             var (value, width) = columns[index];
             var cell = width <= 0 ? value : Truncate(value, width).PadRight(width);
             parts.Add(index < columns.Length - 1 ? $"{cell} | " : cell);
         }
-
         return string.Concat(parts);
     }
 
@@ -373,7 +348,6 @@ public static class ConsoleHelper
     private static int GetVisualLength(string value)
     {
         var length = 0;
-
         for (var index = 0; index < value.Length; index++)
         {
             if (char.IsHighSurrogate(value[index]) &&
@@ -384,10 +358,8 @@ public static class ConsoleHelper
                 index++;
                 continue;
             }
-
             length++;
         }
-
         return length;
     }
 

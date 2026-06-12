@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using PRM.DataAccess.Context;
-
 #nullable disable
 
 namespace PRM.DataAccess.Migrations
@@ -20,7 +19,6 @@ namespace PRM.DataAccess.Migrations
                 nullable: false,
                 defaultValue: 0);
         }
-
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {

@@ -27,7 +27,6 @@ public class ManageProjectsMenu
         while (true)
         {
             ConsoleHelper.WriteHeader("Manage Projects");
-
             Console.WriteLine("1. Create Project");
             Console.WriteLine("2. View All Projects");
             Console.WriteLine("3. Update Project");
@@ -35,9 +34,7 @@ public class ManageProjectsMenu
             Console.WriteLine("5. Back");
             Console.WriteLine();
             Console.Write("Enter option: ");
-
             var choice = Console.ReadLine()?.Trim();
-
             switch (choice)
             {
                 case "1":

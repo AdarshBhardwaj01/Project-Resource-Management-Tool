@@ -9,26 +9,31 @@ internal static class AiPromptBuilder
     {
         var builder = new StringBuilder();
         builder.AppendLine("You are a resource management assistant for an IT services company.");
-        builder.AppendLine("Recommend up to 2 employees whose skills and availability best match the requirement.");
+        if (context.RequireSingleEmployeeMatch)
+        {
+            builder.AppendLine(
+                "Recommend exactly 1 employee who individually matches the full combined requirement. " +
+                "Do not split requested skills across multiple employees.");
+        }
+        else
+        {
+            builder.AppendLine($"Recommend up to {context.MaxSuggestions} employees whose skills and availability best match the requirement.");
+        }
         builder.AppendLine("Only choose employee IDs from the candidate list below.");
         builder.AppendLine("Do not recommend anyone whose skills do not match the required technologies.");
         builder.AppendLine("Return ONLY valid JSON in this exact shape with no markdown:");
-        builder.AppendLine("{\"suggestions\":[{\"employeeId\":1,\"reason\":\"short reason\"},{\"employeeId\":2,\"reason\":\"short reason\"}]}");
+        builder.AppendLine("{\"suggestions\":[{\"employeeId\":1,\"reason\":\"short reason\"}]}");
         builder.AppendLine();
-
         if (!string.IsNullOrWhiteSpace(context.ProjectName))
         {
             builder.AppendLine($"Project: {context.ProjectName}");
         }
-
         builder.AppendLine($"Requirement: {context.Requirement}");
-
         if (context.RequireFullAvailability || context.MinAvailablePercent is > 0)
         {
             var requiredPercent = context.RequireFullAvailability
                 ? 100
                 : context.MinAvailablePercent ?? 0;
-
             if (context.AvailableFromDate.HasValue)
             {
                 builder.AppendLine(
@@ -40,10 +45,8 @@ internal static class AiPromptBuilder
                 builder.AppendLine($"Availability constraint: at least {requiredPercent}% free.");
             }
         }
-
         builder.AppendLine();
         builder.AppendLine("Candidates:");
-
         foreach (var candidate in context.Candidates)
         {
             var status = candidate.IsOnBench ? "BENCH (fully available)" : candidate.Availability;
@@ -51,7 +54,6 @@ internal static class AiPromptBuilder
                 $"- ID {candidate.EmployeeId}: {candidate.FullName}, Department: {candidate.Department}, " +
                 $"Skills: {candidate.Skills}, Status: {status}");
         }
-
         return builder.ToString();
     }
 
@@ -66,16 +68,12 @@ internal static class AiPromptBuilder
         builder.AppendLine($"Project: {context.ProjectName}");
         builder.AppendLine($"Health Status: {context.HealthStatus}");
         builder.AppendLine();
-
         builder.AppendLine("Milestones:");
         AppendLines(builder, context.Milestones, "No milestones recorded.");
-
         builder.AppendLine("Current Allocations:");
         AppendLines(builder, context.Allocations, "No active allocations.");
-
         builder.AppendLine("Risk Indicators:");
         AppendLines(builder, context.RiskFlags, "No negative risk indicators.");
-
         return builder.ToString();
     }
 
@@ -86,7 +84,6 @@ internal static class AiPromptBuilder
             builder.AppendLine($"- {emptyText}");
             return;
         }
-
         foreach (var line in lines)
         {
             builder.AppendLine($"- {line}");

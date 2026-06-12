@@ -16,47 +16,38 @@ public class ResetUserPasswordScreen
     public async Task ShowAsync()
     {
         ConsoleHelper.WriteHeader("Reset User Password");
-
         var usernameOrId = ConsoleHelper.ReadInput("Enter Username or User ID");
-
         try
         {
             var user = await _userApiClient.GetUserAsync(usernameOrId);
             Console.WriteLine();
             Console.WriteLine($"User found: {user.FullName} ({user.Role})");
             Console.WriteLine();
-
             var newPassword = ConsoleHelper.ReadPassword("New Temporary Password");
             ConsoleHelper.WriteSeparator();
             Console.WriteLine("[S] Save     [B] Back");
             Console.Write("Enter choice: ");
-
             var action = Console.ReadLine()?.Trim().ToUpperInvariant();
-
             if (action == "B")
             {
                 return;
             }
-
             if (action != "S")
             {
                 ConsoleHelper.WriteError("Invalid choice.");
                 ConsoleHelper.Pause();
                 return;
             }
-
             if (string.IsNullOrWhiteSpace(newPassword))
             {
                 ConsoleHelper.WriteError("New temporary password is required.");
                 ConsoleHelper.Pause();
                 return;
             }
-
             var message = await _userApiClient.ResetPasswordAsync(usernameOrId, new ResetUserPasswordRequest
             {
                 NewTemporaryPassword = newPassword
             });
-
             ConsoleHelper.WriteSuccess(message);
             ConsoleHelper.Pause();
         }

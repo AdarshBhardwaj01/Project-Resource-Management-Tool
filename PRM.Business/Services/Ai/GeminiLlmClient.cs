@@ -20,20 +20,16 @@ internal sealed class GeminiLlmClient : ILlmClient
     {
         var requestUri =
             $"v1beta/models/{ModelName}:generateContent?key={Uri.EscapeDataString(_apiKey)}";
-
         using var response = await _httpClient.PostAsJsonAsync(
             requestUri,
             new GeminiGenerateContentRequest(prompt),
             cancellationToken);
-
         if (!response.IsSuccessStatusCode)
         {
             return null;
         }
-
         var payload = await response.Content.ReadFromJsonAsync<GeminiGenerateContentResponse>(
             cancellationToken: cancellationToken);
-
         return payload?.Candidates?
             .FirstOrDefault()?
             .Content?
@@ -59,7 +55,6 @@ internal sealed class GeminiLlmClient : ILlmClient
 
         [JsonPropertyName("contents")]
         public List<GeminiContent> Contents { get; set; }
-
         [JsonPropertyName("generationConfig")]
         public GeminiGenerationConfig GenerationConfig { get; set; }
     }
@@ -68,7 +63,6 @@ internal sealed class GeminiLlmClient : ILlmClient
     {
         [JsonPropertyName("temperature")]
         public double Temperature { get; set; } = 0.2;
-
         [JsonPropertyName("maxOutputTokens")]
         public int MaxOutputTokens { get; set; } = 1024;
     }

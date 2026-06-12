@@ -8,6 +8,5 @@ public interface IMilestoneRepository : IRepository<Milestone>
         int milestoneId,
         int projectId,
         CancellationToken cancellationToken = default);
-
     Task<int> GetMaxSortOrderAsync(int projectId, CancellationToken cancellationToken = default);
 }
